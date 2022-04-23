@@ -1,0 +1,31 @@
+{
+  "name": "pdjr-skplugin-canwatchdog",
+  "version": "1.0.0",
+  "description": "Monitor a CAN interface for dropout",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/preeve9534/pdjr-skplugin-canwatchdog.git"
+  },
+  "keywords": [
+    "signalk-node-server-plugin",
+    "signalk",
+    "can",
+    "watchdog",
+    "plugin"
+  ],
+  "author": "Paul Reeve <preeve@pdjr.eu>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/preeve9534/pdjr-skplugin-canwatchdog/issues"
+  },
+  "homepage": "https://github.com/preeve9534/pdjr-skplugin-canwatchdog#readme",
+  "dependencies": {
+    "baconjs": "^1.0.1",
+    "sprintf-js": "^1.1.2",
+    "sprintf.js": "^0.1.4"
+  }
+}
