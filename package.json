@@ -12,6 +12,7 @@
   },
   "keywords": [
     "signalk-node-server-plugin",
+    "signalk-category-utility",
     "signalk",
     "can",
     "watchdog",
@@ -27,5 +28,8 @@
     "baconjs": "^1.0.1",
     "sprintf-js": "^1.1.2",
     "sprintf.js": "^0.1.4"
+  },
+  "directories": {
+    "lib": "lib"
   }
 }
