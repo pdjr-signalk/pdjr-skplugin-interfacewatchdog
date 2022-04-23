@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "properties": {
+    "interface": {
+      "title": "CAN interface",
+      "type": "string",
+    },
+    "threshold": {
+      "title": "Trigger threshold (deltas/s)",
+      "type": "number",
+    },
+    "reboot": {
+      "title": "Reboot on threshold excursion?",
+      "type": "number",
+    }
+  },
+  "default": { "interface": "n2k-on-ve.can-socket", "threshold": 0, "reboot": 1 }
+}

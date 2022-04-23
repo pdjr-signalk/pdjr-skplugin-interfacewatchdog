@@ -58,7 +58,7 @@ module.exports = function(app) {
 
     app.on('serverevent', e => {
 	    log.N("Event detected");
-    };
+    });
   }
 
   plugin.stop = function() {
