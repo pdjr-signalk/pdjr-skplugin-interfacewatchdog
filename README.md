@@ -38,5 +38,9 @@ The event handler which detects CAN interface throughput cannot update
 the Signal K Dashboard, so operational status is only recorded in the
 host system log.
 
+Reboot is effected by killing the host process. Signal K will only
+restart automatically if the process manager is configured for this
+behaviour.
+
 ## Author
 Paul Reeve <preeve_at_pdjr.eu>
