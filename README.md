@@ -14,7 +14,7 @@ own vessel where a buggy N2K device was occasionally issuing a
 broken PGN which in-turn caused Signal K's CAN interface driver
 (in my case canboatjs) to lock-up.
 Rebooting Signal K on CAN interface lock-up made the problem a
-much less significat issue.
+much less annoying issue.
 
 ## Configuration
 The plugin recognises the following configuration properties.
