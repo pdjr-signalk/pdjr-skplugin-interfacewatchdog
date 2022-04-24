@@ -17,7 +17,6 @@
 const Log = require("./lib/signalk-liblog/Log.js");
 const DebugLog = require("./lib/signalk-liblog/DebugLog.js");
 const Schema = require("./lib/signalk-libschema/Schema.js");
-const Notification = require("./lib/signalk-libnotification/Notification.js");
 
 const PLUGIN_ID = "canwatchdog";
 const PLUGIN_NAME = "CAN interface watchdog";
@@ -60,6 +59,7 @@ module.exports = function(app) {
                     console.log(PLUGIN_ID + ": delta rate below trigger threshold");
                     if (options.reboot) {
                       console.log(PLUGIN_ID + ": restarting Signal K");
+	              process.exit();
                     }
                   }
                 }
