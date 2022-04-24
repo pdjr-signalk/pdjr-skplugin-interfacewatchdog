@@ -15,7 +15,6 @@
  */
 
 const Log = require("./lib/signalk-liblog/Log.js");
-const DebugLog = require("./lib/signalk-liblog/DebugLog.js");
 const Schema = require("./lib/signalk-libschema/Schema.js");
 
 const PLUGIN_ID = "canwatchdog";
@@ -34,7 +33,6 @@ module.exports = function(app) {
   plugin.description = PLUGIN_DESCRIPTION;
 
   const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
-  const notification = new Notification(app, plugin.id);
 
   plugin.schema = function() {
     var schema = Schema.createSchema(PLUGIN_SCHEMA_FILE);
