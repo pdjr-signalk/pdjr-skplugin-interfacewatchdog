@@ -14,7 +14,6 @@
  * permissions and limitations under the License.
  */
 
-const bacon = require('baconjs');
 const Log = require("./lib/signalk-liblog/Log.js");
 const DebugLog = require("./lib/signalk-liblog/DebugLog.js");
 const Schema = require("./lib/signalk-libschema/Schema.js");
@@ -30,8 +29,6 @@ const PLUGIN_DEBUG_TOKENS = [  ];
 
 module.exports = function(app) {
   var plugin = {};
-  var unsubscribes = [];
-  var switchbanks = {};
 
   plugin.id = PLUGIN_ID;
   plugin.name = PLUGIN_NAME;
@@ -51,19 +48,44 @@ module.exports = function(app) {
   }
 
   plugin.start = function(options) {
-    if (!options) {
-      log.N("using plugin default configuration");
-      options = { "interface": "can", "threshold": 0, "reboot": 1 };
+    if (options) {
+      if  (validateOptions(options)) {
+        log.N("Watching '%s' (threshold = %d, reboot = %s)", options.interface, options.threshold, options.reboot);
+        app.on('serverevent', (e) => {
+          if ((e.type) && (e.type == "SERVERSTATISTICS")) {
+	    if ((e.data) && (e.data.providerStatistics)) {
+              if (e.data.providerStatistics[options.interface]) {
+                if (e.data.providerStatistics[options.interface].deltaRate) {
+		  if (e.data.providerStatistics[options.interface].deltaRate <= options.threshold) {
+                    console.log(PLUGIN_ID + ": delta rate below trigger threshold");
+                    if (options.reboot) {
+                      console.log(PLUGIN_ID + ": restarting Signal K");
+                    }
+                  }
+                }
+              } else {
+	        console.log(PLUGIN_ID + ": provider statistics are not available for interface '" + options.interface + "'");
+              } 
+            }
+          }
+        });
+      } else {
+        log.N("Invalid configuration");
+      }
     }
-
-    app.on('serverevent', e => {
-	    log.N("Event detected");
-    });
   }
 
   plugin.stop = function() {
-	unsubscribes.forEach(f => f());
-	unsubscribes = [];
+  }
+
+  function validateOptions(options) {
+    var retval = 0;
+    if ((options.interface) && (options.interface != "")) {
+      if (options.threshold >= 0) {
+        retval = 1;
+      }
+    }
+    return(1);
   }
 
   return(plugin);

@@ -1,27 +1,22 @@
 # pdjr-skplugin-canwatchdog
 
-Watchdog looking for CAN interface lockup
+Watchdog looking for CAN interface lockup.
 
-# Background
-I started using Signal K in 2018 and would occaionally find that my server
-had failed because its N2K input data stream had died.
-This problem persisted over multiple generations of server hardware and
-software and despite many hours of investigation proved to be an intractable
-problem.
+## Description
+**canwatchdog** monitors the throughput in deltas per second of a
+specified Signal K interface.
+If the throughput falls below some user defined threshold then a
+warning is written to the server log and, if configured, the plugin
+will restart the host Signal K server.
 
-My suspicion is that there is a device on my N2K bus which is generating
-data that Signal K's CAN interface parser (I currently use canboatjs) cannot
-handle, but the sporadic nature of the fault has made diagnosis difficult.
+The plugin was written as a tool to help diagnose a problem on my
+own vessel where a buggy N2K device was occasionally issuing a
+broken PGN which in-turn caused Signal K's CAN interface driver
+(in my case canboatjs) to lock-up.
+Rebooting Signal K on CAN interface lock-up made the problem a
+much less significat issue.
 
-This plugin was written as a diagnostic tool, but until I make the time
-to investigate the problem further it serves as a rather crude solution to
-the problem of a dead input data stream.
-The operating principle is simple: monitor Signal K's  delta data throughput
-(in deltas per second) on a specified CAN interface and if the rate falls
-below some designated threshold then log the time of failure and (optionally)
-restart Signal K (I haven't worked out how to simply reboot canboatjs).
-
-# Configuration
+## Configuration
 The plugin recognises the following configuration properties.
 
 **CAN interface (string)**
@@ -37,3 +32,11 @@ Defaults to 0.
 Specifies whether or not the plugin should reboot the Signal K host
 when the CAN interface throughput falls below "Trigger threshold".
 Defaults to true.
+
+## Issues
+The event handler which detects CAN interface throughput cannot update
+the Signal K Dashboard, so operational status is only recorded in the
+host system log.
+
+## Author
+Paul Reeve <preeve_at_pdjr.eu>
