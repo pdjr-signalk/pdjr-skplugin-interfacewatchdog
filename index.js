@@ -54,13 +54,13 @@ module.exports = function(app) {
           if (e.data.providerStatistics[options.interface].deltaRate !== undefined) {
 	    if (parseInt(e.data.providerStatistics[options.interface].deltaRate) <= options.threshold) {
               console.log(PLUGIN_ID + ": delta rate at or below trigger threshold");
-              notification.issue(plugin.id, "Throughput on '" + options.interface + "' dropped below threshold");
+              notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold");
               if (options.reboot) {
                 console.log(PLUGIN_ID + ": restarting Signal K");
 	        process.exit(0);
               } 
             } else {
-              notification.cancel(plugin.id);
+              notification.cancel(options.notificationpath);
             }
           }
         }

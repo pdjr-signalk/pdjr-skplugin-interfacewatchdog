@@ -12,7 +12,11 @@
     "reboot": {
       "title": "Reboot on threshold excursion?",
       "type": "boolean"
+    },
+    "notification": {
+      "title": "Notification path",
+      "type": "string"
     }
   },
-  "default": { "interface": "n2k-on-ve.can-socket", "threshold": 0, "reboot": true }
+  "default": { "interface": "n2k-on-ve.can-socket", "threshold": 0, "reboot": true, "notificationpath": "notifications.interfacewatchdog" }
 }
