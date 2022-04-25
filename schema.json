@@ -2,18 +2,18 @@
   "type": "object",
   "properties": {
     "interface": {
-      "title": "CAN interface",
+      "title": "Interface",
       "type": "string"
     },
     "threshold": {
-      "title": "Trigger threshold (deltas/s)",
+      "title": "Threshold",
       "type": "number"
     },
     "reboot": {
-      "title": "Reboot on threshold excursion?",
+      "title": "Reboot",
       "type": "boolean"
     },
-    "notification": {
+    "notificationpath": {
       "title": "Notification path",
       "type": "string"
     }
