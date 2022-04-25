@@ -1,31 +1,27 @@
 # pdjr-skplugin-canwatchdog
 
-Watchdog looking for interface lockup.
+Signal K interface activity watchdog.
 
 ## Description
 
-**canwatchdog** monitors the data rate in deltas per second of a
-specified Signal K interface.
-If the data rate on the selected interface falls below some user
-defined threshold then the plugin will at least write a warning
-message to the server log and may (with appropriate configuration)
-restart the host Signal K server.
+**canwatchdog** monitors the activity of a specified Signal K interface
+waiting for the connection rate to fall below some specified threshold.
+If this happens, the plugin writes a message to the server log and,
+optionally, restarts the the host Signal K server.
 
-The plugin was designed to monitor CAN interfaces, but can be used
-against any 'provider' interface.
+The plugin was designed to monitor interfaces associated with a data
+connection, but can be used against any interface listed in the
+server dashboard connection panel.
 
 ## Configuration
 
 The plugin recognises the following configuration properties.
 
-**Interface**
-: A string value specifying the Signal K interface that should be monitored. Defaults to 'n2k-on-ve.can-socket'.
-
-**Threshold**
-: An integer value specifying the data rate in deltas per second at or below which the plugin should act. Defaults to 0.
-
-**Reboot**
-: A boolean value specifying whether or not the plugin should reboot the Signal K host when throughput excurses below 'Threshold'. Defaults to true.
+Property  | Description | Default value
+--------- | --- | ---
+Interface | The Signal K interface that should be monitored. | 'n2k-on-ve.can-socket'
+Threshold | The data rate (in deltas per second) at or below which the plugin should act. | 0
+Reboot    | Whether or not the plugin should reboot the Signal K host when throughput drops below 'Threshold'. | true
 
 ## Issues
 
@@ -43,9 +39,10 @@ The plugin was written as a tool to help diagnose a problem on my
 own vessel where a buggy N2K device was occasionally issuing a
 broken PGN which in-turn caused Signal K's CAN interface driver
 (in my case 'canboatjs') to lock-up.
+
 Rebooting Signal K when an interface lock-up was detected made the
-problem a much less annoying issue until the underlying problem
-with 'canboatjs' was fixed.
+problem a much less annoying issue until the underlying 'canboatjs'
+bug could be diagnosed and fixed.
 
 ## Author
 
