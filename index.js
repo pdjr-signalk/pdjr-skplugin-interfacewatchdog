@@ -1,5 +1,5 @@
 /**********************************************************************
- * Copyright 2018 Paul Reeve <paul@pdjr.eu>
+ * Copyright 2022 Paul Reeve <preeve@pdjr.eu>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you
  * may not use this file except in compliance with the License. You may
@@ -46,44 +46,26 @@ module.exports = function(app) {
 
   plugin.start = function(options) {
     if (options) {
-      if  (validateOptions(options)) {
-        log.N("Watching '%s' (threshold = %d, reboot = %s)", options.interface, options.threshold, options.reboot);
-        app.on('serverevent', (e) => {
-          if ((e.type) && (e.type == "SERVERSTATISTICS")) {
-	    if ((e.data) && (e.data.providerStatistics)) {
-              if (e.data.providerStatistics[options.interface]) {
-                if (e.data.providerStatistics[options.interface].deltaRate) {
-		  if (e.data.providerStatistics[options.interface].deltaRate <= options.threshold) {
-                    console.log(PLUGIN_ID + ": delta rate below trigger threshold");
-                    if (options.reboot) {
-                      console.log(PLUGIN_ID + ": restarting Signal K");
-	              process.exit();
-                    }
-                  }
-                }
-              } else {
-	        console.log(PLUGIN_ID + ": provider statistics are not available for interface '" + options.interface + "'");
+      log.N("Watching '%s' (threshold = %d, reboot = %s)", options.interface, options.threshold, options.reboot);
+      app.on('serverevent', (e) => {
+        if ((e.type) && (e.type == "SERVERSTATISTICS")) {
+          if (e.data.providerStatistics[options.interface].deltaRate !== undefined) {
+	    if (parseInt(e.data.providerStatistics[options.interface].deltaRate) <= options.threshold) {
+              console.log(PLUGIN_ID + ": delta rate at or below trigger threshold");
+              if (options.reboot) {
+                console.log(PLUGIN_ID + ": restarting Signal K");
+	        process.exit(0);
               } 
             }
           }
-        });
-      } else {
-        log.N("Invalid configuration");
-      }
+        }
+      });
+    } else {
+      log.E("bad or missing configuration");
     }
   }
 
   plugin.stop = function() {
-  }
-
-  function validateOptions(options) {
-    var retval = 0;
-    if ((options.interface) && (options.interface != "")) {
-      if (options.threshold >= 0) {
-        retval = 1;
-      }
-    }
-    return(1);
   }
 
   return(plugin);
