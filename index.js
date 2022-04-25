@@ -16,6 +16,7 @@
 
 const Log = require("./lib/signalk-liblog/Log.js");
 const Schema = require("./lib/signalk-libschema/Schema.js");
+const Notification = require("./lib/signalk-libnotification/Notification.js");
 
 const PLUGIN_ID = "interfacewatchdog";
 const PLUGIN_NAME = "Signal K interface activity watchdog";
@@ -33,6 +34,7 @@ module.exports = function(app) {
   plugin.description = PLUGIN_DESCRIPTION;
 
   const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
+  const notification = new Notification(app, plugin.id, { "state": "alarm", "method": [ ] });
 
   plugin.schema = function() {
     var schema = Schema.createSchema(PLUGIN_SCHEMA_FILE);
@@ -52,10 +54,13 @@ module.exports = function(app) {
           if (e.data.providerStatistics[options.interface].deltaRate !== undefined) {
 	    if (parseInt(e.data.providerStatistics[options.interface].deltaRate) <= options.threshold) {
               console.log(PLUGIN_ID + ": delta rate at or below trigger threshold");
+              notification.issue(plugin.id, "Throughput on '" + options.interface + "' dropped below threshold");
               if (options.reboot) {
                 console.log(PLUGIN_ID + ": restarting Signal K");
 	        process.exit(0);
               } 
+            } else {
+              notification.cancel(plugin.id);
             }
           }
         }
