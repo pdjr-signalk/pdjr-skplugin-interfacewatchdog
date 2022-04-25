@@ -1,10 +1,10 @@
-# pdjr-skplugin-canwatchdog
+# pdjr-skplugin-interfacewatchdog
 
 Signal K interface activity watchdog.
 
 ## Description
 
-**canwatchdog** monitors the activity of a specified Signal K interface
+**interfacewatchdog** monitors the activity of a specified Signal K interface
 waiting for the connection rate to fall below some specified threshold.
 If this happens, the plugin writes a message to the server log and,
 optionally, restarts the the host Signal K server.

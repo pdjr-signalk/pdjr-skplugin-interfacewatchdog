@@ -1,33 +1,31 @@
 {
-  "name": "pdjr-skplugin-canwatchdog",
+  "name": "pdjr-skplugin-interfacewatchdog",
   "version": "1.0.0",
-  "description": "Monitor a CAN interface for dropout",
+  "description": "Signal K interface activity watchdog",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/preeve9534/pdjr-skplugin-canwatchdog.git"
+    "url": "git+https://github.com/preeve9534/pdjr-skplugin-interfacewatchdog.git"
   },
   "keywords": [
     "signalk-node-server-plugin",
     "signalk-category-utility",
     "signalk",
-    "can",
+    "interface",
     "watchdog",
     "plugin"
   ],
   "author": "Paul Reeve <preeve@pdjr.eu>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/preeve9534/pdjr-skplugin-canwatchdog/issues"
+    "url": "https://gitub.com/preeve9534/pdjr-skplugin-interfacewatchdog/issues"
   },
-  "homepage": "https://github.com/preeve9534/pdjr-skplugin-canwatchdog#readme",
+  "homepage": "https://github.com/preeve9534/pdjr-skplugin-interfacewatchdog#readme",
   "dependencies": {
-    "baconjs": "^1.0.1",
     "sprintf-js": "^1.1.2",
-    "sprintf.js": "^0.1.4"
   },
   "directories": {
     "lib": "lib"

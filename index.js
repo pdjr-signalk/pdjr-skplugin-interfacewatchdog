@@ -17,9 +17,9 @@
 const Log = require("./lib/signalk-liblog/Log.js");
 const Schema = require("./lib/signalk-libschema/Schema.js");
 
-const PLUGIN_ID = "canwatchdog";
-const PLUGIN_NAME = "CAN interface watchdog";
-const PLUGIN_DESCRIPTION = "Monitor a CAN interface for anomalous changes in throughput";
+const PLUGIN_ID = "interfacewatchdog";
+const PLUGIN_NAME = "Signal K interface activity watchdog";
+const PLUGIN_DESCRIPTION = "Monitor a Signal K interface for anomalous changes in throughput";
 
 const PLUGIN_SCHEMA_FILE = __dirname + "/schema.json";
 const PLUGIN_UISCHEMA_FILE = __dirname + "/uischema.json";
