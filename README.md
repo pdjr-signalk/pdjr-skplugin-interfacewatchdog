@@ -26,26 +26,26 @@ Notification path | The path on which the plugin should issue alarm notification
 
 ## Operation
 
-1. The plugin checks throughput on the specified interface each time
-   Signal K issues a 'serverevent' of type 'SERVERSTATISTICS'
-   (typically every four or five seconds).
+1. The plugin checks throughput on *Interface* each time Signal K
+   issues a 'serverevent' of type 'SERVERSTATISTICS' (typically every
+   four or five seconds).
 
-2, The plugin issues an alarm notification on the configured path if
-   throughput on the monitored interface falls below the specified
-   threshold and clears the notification when throughput is above the
-   threshold.
+2, The plugin issues an alarm notification  on *Notification path* if
+   throughput on *Interface* falls below *Threshold*. The alarm notification
+   is cancelled as soon as throughput is above *Threshold*.
 
-3. The event handler which detects CAN interface throughput cannot
-   update plugin status information in the Signal K Dashboard.
+3. If *Reboot* is configured then the plugin will promptly kill
+   the host process when *Interface* throughput falls below *Threshold*.
+   Signal K will only restart automatically if the host operating system's
+   process manager is configured for this behaviour.
 
-4. If server reboot is configured then the plugin will promptly kill
-   the host process when interface throughput falls below the specified
-   threshold. Signal K will only restart automatically if the host
-   operating system's process manager is configured for this behaviour.
-
-5. Any reboot is delayed for approximately one second after alarm
-   notification. This delay alows any annunciator process to detect the
+4. Any reboot is delayed for approximately one second after alarm
+   notification. This delay alows an annunciator process to detect the
    alarm and do its thing.
+
+The event handler which detects CAN interface throughput cannot update plugin
+status information in the Signal K Dashboard, so the only message you will see
+here is confirmation of startup.
 
 ## Background
 
