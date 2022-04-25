@@ -46,4 +46,4 @@ bug could be diagnosed and fixed.
 
 ## Author
 
-Paul Reeve <preeve_at_pdjr.eu>
+Paul Reeve <preeve_at_pdjr_dot_eu>
