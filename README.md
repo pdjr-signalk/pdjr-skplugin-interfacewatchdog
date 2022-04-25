@@ -40,12 +40,12 @@ Notification path | The path on which the plugin should issue alarm notification
    process manager is configured for this behaviour.
 
 4. Any reboot is delayed for approximately one second after alarm
-   notification. This delay alows an annunciator process to detect the
+   notification. This delay allows an annunciator process to detect the
    alarm and do its thing.
 
 The event handler which detects CAN interface throughput cannot update plugin
-status information in the Signal K Dashboard, so the only message you will see
-here is confirmation of startup.
+status information in the Signal K Dashboard, so the only plugin status message
+you will see is confirmation of startup.
 
 ## Background
 
