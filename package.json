@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/preeve9534/pdjr-skplugin-interfacewatchdog#readme",
   "dependencies": {
-    "sprintf-js": "^1.1.2",
+    "sprintf-js": "^1.1.2"
   },
   "directories": {
     "lib": "lib"
