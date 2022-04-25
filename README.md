@@ -21,7 +21,7 @@ Property  | Description | Default value
 --------- | --- | ---
 Interface | The Signal K interface that should be monitored. | 'n2k-on-ve.can-socket'
 Threshold | The data rate (in deltas per second) at or below which the plugin should act. | 0
-Reboot    | Whether or not the plugin should reboot the Signal K host when throughput drops below 'Threshold'. | true
+Reboot    | Whether or not the plugin should reboot the Signal K host when throughput drops below the specified 'Threshold' value. | true
 
 ## Issues
 
