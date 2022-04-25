@@ -30,7 +30,7 @@ Notification path | The path on which the plugin should issue alarm notification
    issues a 'serverevent' of type 'SERVERSTATISTICS' (typically every
    four or five seconds).
 
-2, The plugin issues an alarm notification  on *Notification path* if
+2. The plugin issues an alarm notification  on *Notification path* if
    throughput on *Interface* falls below *Threshold*. The alarm notification
    is cancelled as soon as throughput is above *Threshold*.
 
