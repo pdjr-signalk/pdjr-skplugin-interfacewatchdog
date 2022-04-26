@@ -43,11 +43,12 @@ Note that:
   operating system's process manager is configured for this behaviour.
 
 * A restart is delayed for approximately one second after alarm notification.
-  This delay allows an annunciator process to detect the alarm and do its thing.
+  This delay is designed to allow an annunciator process to detect the alarm and
+  do its thing.
 
 * The event handler which detects interface throughput cannot update plugin
   status information in the Signal K Dashboard, so the only plugin status message
-  you will see is confirmation that the plugin has started.
+  you will see on the server console is confirmation that the plugin has started.
 
 ## Background
 
@@ -58,7 +59,7 @@ case 'canboatjs') to lock-up.
 
 Automatically restarting Signal K when an interface lock-up is detected
 stops the problem becoming a major issue until the inferred 'canboatjs'
-bug can be diagnosed and fixed.
+bug can be diagnosed and fixed. 
 
 ## Author
 
