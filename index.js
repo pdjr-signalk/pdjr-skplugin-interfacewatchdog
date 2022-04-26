@@ -50,18 +50,18 @@ module.exports = function(app) {
     var issued = 0;
 
     if (options) {
-      log.N("Watching '%s' (threshold = %d, reboot = %s)", options.interface, options.threshold, options.reboot);
+      log.N("Watching '%s' (threshold = %d, restart = %s)", options.interface, options.threshold, options.restart);
       notification.cancel(options.notificationpath);
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
           if (e.data.providerStatistics[options.interface].deltaRate !== undefined) {
 	    if (parseInt(e.data.providerStatistics[options.interface].deltaRate) <= options.threshold) {
-              console.log(PLUGIN_ID + ": delta rate at or below trigger threshold");
+              console.log(PLUGIN_ID + ": throughput on '" + options.interface + "' dropped below threshold");
               if (!issued) {
                 notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold");
 	        issued = 1;
 	      }
-              if (options.reboot) {
+              if (options.restart) {
                 console.log(PLUGIN_ID + ": restarting Signal K");
 	        process.exit(0);
               } 
