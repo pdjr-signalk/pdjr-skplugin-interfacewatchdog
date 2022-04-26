@@ -49,14 +49,14 @@ you will see is confirmation of startup.
 
 ## Background
 
-The plugin was written as a tool to help diagnose a problem on my
-own vessel where a buggy N2K device was occasionally issuing a
-broken PGN which in-turn caused Signal K's CAN interface driver
-(in my case 'canboatjs') to lock-up.
+The plugin was written as a tool to help diagnose a problem on my own
+vessel where a suspected buggy N2K device is occasionally issuing a
+broken PGN which in-turn causes Signal K's CAN interface driver (in my
+case 'canboatjs') to lock-up.
 
-Rebooting Signal K when an interface lock-up was detected made the
-problem a much less annoying issue until the underlying 'canboatjs'
-bug could be diagnosed and fixed.
+Automatically restarting Signal K when an interface lock-up is detected
+stops the problem becoming a major issue until the inferred 'canboatjs'
+bug can be diagnosed and fixed.
 
 ## Author
 
