@@ -32,7 +32,7 @@ Notification path | The path under `vessels.self` on which the plugin should iss
 
 2. If the detected throughput is less than or equal to the configured threshold
    then an alarm notification is issued on the specified notification path and,
-   if a restart is configured, promptly kill the host process.
+   if a restart is configured, promptly kills the host Node process.
    
 Note that:
 
