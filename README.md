@@ -21,31 +21,34 @@ Property          | Description | Default value
 ----------------- | --- | ---
 Interface         | The Signal K interface that should be monitored. | 'n2k-on-ve.can-socket'
 Threshold         | The data rate (in deltas per second) at or below which the plugin should act. | 0
-Reboot            | Whether or not the plugin should reboot the Signal K host when throughput drops below the specified 'Threshold' value. | true
-Notification path | The path under `vessel.self` on which the plugin should issue alarm notifications. | 'notifications.interfacewatchdog'
+Restart           | Whether or not the plugin should restart the Signal K host when throughput drops below the specified 'Threshold' value. | true
+Notification path | The path under `vessels.self` on which the plugin should issue alarm notifications. | 'notifications.interfacewatchdog'
 
 ## Operation
 
-1. The plugin checks throughput on *Interface* each time Signal K
+1. The plugin checks throughput on the defined interface each time Signal K
    issues a 'serverevent' of type 'SERVERSTATISTICS' (typically every
    four or five seconds).
 
-2. The plugin issues an alarm notification  on *Notification path* if
-   throughput on *Interface* falls below *Threshold*. The alarm notification
-   is cancelled as soon as throughput is above *Threshold*.
+2. If the detected throughput is less than or equal to the configured threshold
+   then an alarm notification is issued on the specified notification path and,
+   if a restart is configured, then the plugin will promptly kill the host
+   process.
+   
+Note that:
 
-3. If *Reboot* is configured then the plugin will promptly kill
-   the host process when *Interface* throughput falls below *Threshold*.
-   Signal K will only restart automatically if the host operating system's
-   process manager is configured for this behaviour.
+* If restart is not configured then any issued alarm notification is cleared if
+  throughput rises above the configured threshold.
+  
+* If restart is configured Signal K will only restart automatically if the host
+  operating system's process manager is configured for this behaviour.
 
-4. Any reboot is delayed for approximately one second after alarm
-   notification. This delay allows an annunciator process to detect the
-   alarm and do its thing.
+* A restart is delayed for approximately one second after alarm notification.
+  This delay allows an annunciator process to detect the alarm and do its thing.
 
-The event handler which detects CAN interface throughput cannot update plugin
-status information in the Signal K Dashboard, so the only plugin status message
-you will see is confirmation of startup.
+* The event handler which detects interface throughput cannot update plugin
+  status information in the Signal K Dashboard, so the only plugin status message
+  you will see is confirmation that the plugin has started.
 
 ## Background
 
