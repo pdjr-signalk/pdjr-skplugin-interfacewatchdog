@@ -7,7 +7,7 @@ Signal K interface activity watchdog.
 **interfacewatchdog** monitors the activity of a specified Signal K interface
 waiting for the connection rate to fall below some specified threshold.
 If this happens, the plugin writes a message to the server log, issues a
-notification and optionally restarts the the host Signal K server.
+notification and optionally restarts the host Signal K server.
 
 The plugin was designed to monitor interfaces associated with a data
 connection, but can be used against any interface listed in the
