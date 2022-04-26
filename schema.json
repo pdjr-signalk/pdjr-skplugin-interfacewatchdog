@@ -9,8 +9,8 @@
       "title": "Threshold",
       "type": "number"
     },
-    "reboot": {
-      "title": "Reboot",
+    "restart": {
+      "title": "Restart",
       "type": "boolean"
     },
     "notificationpath": {
@@ -18,5 +18,5 @@
       "type": "string"
     }
   },
-  "default": { "interface": "n2k-on-ve.can-socket", "threshold": 0, "reboot": true, "notificationpath": "notifications.interfacewatchdog" }
+  "default": { "interface": "n2k-on-ve.can-socket", "threshold": 0, "restart": true, "notificationpath": "notifications.interfacewatchdog" }
 }
