@@ -27,7 +27,13 @@
   "dependencies": {
     "sprintf-js": "^1.1.2"
   },
+  "files": [
+    "lib/signalk-libnotification/Notification.js",
+    "lib/signalk-liblog/Log.js",
+    "lib/signalk-libschema/Schema.js"
+  ],
   "directories": {
     "lib": "lib"
-  }
+  },
+  "devDependencies": {}
 }
