@@ -47,6 +47,7 @@ module.exports = function(app) {
   }
 
   plugin.start = function(options) {
+    var started = 0;
     var issued = 0;
 
     if (options) {
@@ -55,7 +56,9 @@ module.exports = function(app) {
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
           if (e.data.providerStatistics[options.interface].deltaRate !== undefined) {
-	    if (parseInt(e.data.providerStatistics[options.interface].deltaRate) <= options.threshold) {
+            var throughput = e.data.providerStatistics[options.interface].deltaRate;
+            if ((started == 0) && (throughput > 0.0)) started = 1;
+	    if ((started == 1) && (parseInt(throughput) <= options.threshold)) {
               console.log(PLUGIN_ID + ": throughput on '" + options.interface + "' dropped below threshold");
               if (!issued) {
                 notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold");

@@ -28,6 +28,8 @@
     "sprintf-js": "^1.1.2"
   },
   "files": [
+    "schema.json",
+    "uischema.json",
     "lib/signalk-libnotification/Notification.js",
     "lib/signalk-liblog/Log.js",
     "lib/signalk-libschema/Schema.js"

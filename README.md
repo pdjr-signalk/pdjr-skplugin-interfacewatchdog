@@ -26,7 +26,10 @@ notificationpath | The path under `vessels.self` on which the plugin should issu
 
 ## Operation
 
-1. The plugin checks throughput on *interface* each time Signal K
+1. If *interface* appears to be dead on startup then the plugin
+   issues a message to the Signal K dashboard ane exits.
+
+2. The plugin checks throughput on *interface* each time Signal K
    issues a 'serverevent' of type 'SERVERSTATISTICS' (typically every
    four or five seconds).
 
