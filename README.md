@@ -26,14 +26,15 @@ notificationpath | The path under `vessels.self` on which the plugin should issu
 
 ## Operation
 
-1. If *interface* appears to be dead on startup then the plugin
-   issues a message to the Signal K dashboard ane exits.
+1. The plugin remains idle until throughput appears on *interface*. This
+   prevents the plugin causing repeated, immediate, restarts on a server
+   on which *interface* is dead.
+   
+2. Once *interface* is clearly alive, the plugin checks throughput on
+   *interface* each time Signal issues a 'serverevent' of type
+   'SERVERSTATISTICS' (typically every four or five seconds).
 
-2. The plugin checks throughput on *interface* each time Signal K
-   issues a 'serverevent' of type 'SERVERSTATISTICS' (typically every
-   four or five seconds).
-
-2. If the detected throughput is less than or equal to *threshold*
+3. If the detected throughput is less than or equal to *threshold*
    then an alarm notification is issued on *notificationpath* and,
    if *restart* is true, promptly kills the host Node process.
    
