@@ -52,7 +52,7 @@ module.exports = function(app) {
     if (options) {
       log.N("Started (interface = '%s', threshold = %d, reboot = %s)", options.interface, options.threshold, options.restart);
       notification.cancel(options.notificationpath);
-	    
+            
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
           if (e.data.providerStatistics[options.interface].deltaRate !== undefined) {
@@ -61,27 +61,27 @@ module.exports = function(app) {
             // Check interface to make sure it has some activity
             if ((hasBeenActive == 0) && (throughput > 0.0)) {
               log.N("interface '%s' is active; watching throughput (threshold = %d, restart = %s)", options.interface, options.threshold, options.restart, false);
-	      hasBeenActive = 1;
-	    }
-		  
+              hasBeenActive = 1;
+            }
+                  
             // If interface is active, then monitor throughput
-	    if (hasBeenActive == 1) {
-	      if (parseInt(throughput) <= options.threshold) {
+            if (hasBeenActive == 1) {
+              if (parseInt(throughput) <= options.threshold) {
                 log.N("throughput on '%s' dropped below threshold", options.interface, false);
                 if (!alarmIssued) {
                   notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold");
-	          alarmIssued = 1;
-	        }
+                  alarmIssued = 1;
+                }
                 if (options.restart) {
                   log.N("restarting Signal K", false);
-	          process.exit(0);
+                  process.exit(0);
                 } 
               } else {
                 if (alarmIssued) {
                   notification.cancel(options.notificationpath);
-		  alarmIssued = 0;
-	        }
-	      }
+                  alarmIssued = 0;
+                }
+              }
             }
           }
         }
