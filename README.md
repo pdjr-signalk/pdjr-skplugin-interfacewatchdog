@@ -28,15 +28,17 @@ notificationpath | The path under `vessels.self` on which the plugin should issu
 
 1. The plugin remains idle until throughput appears on *interface*. This
    prevents the plugin causing repeated, immediate, restarts on a server
-   on which *interface* is dead.
+   on which *interface* is disconnected or otherwise dead.
    
-2. Once *interface* is clearly alive, the plugin checks throughput on
-   *interface* each time Signal issues a 'serverevent' of type
-   'SERVERSTATISTICS' (typically every four or five seconds).
+2. Once activity is detected on *interface* the plugin checks the
+   throughput statistic reported by Signal K each time the server issues
+   a 'serverevent' of type 'SERVERSTATISTICS' (typically every four or
+   five seconds). You can view these activity values in the Signal K
+   dashboard.
 
 3. If the detected throughput is less than or equal to *threshold*
    then an alarm notification is issued on *notificationpath* and,
-   if *restart* is true, promptly kills the host Node process.
+   if *restart* is true, the host Node process is killed.
    
 Note that:
 
@@ -47,13 +49,15 @@ Note that:
   automatically if the host operating system's process manager is configured
   for this behaviour.
 
-* The kill signal is issued approximately one second after the alarm is issued
-  on *notificationpath*: this delay is designed to allow an alarm handler or
-  annunciator to detect the alarm condition and do its thing.
+* The kill signal is issued approximately one second after the alarm
+  notification is issue on *notificationpath*: this delay is designed to
+  allow an alarm handler or annunciator to detect the alarm condition and
+  do its thing.
 
 * The event handler which detects interface throughput cannot update plugin
-  status information in the Signal K Dashboard, so the only plugin status message
-  you will see on the server console is confirmation that the plugin has started.
+  status information in the Signal K Dashboard, so the only plugin status
+  messages you will see on the server dashboard are those associated with
+  plugin initialisation.
 
 ## Background
 
