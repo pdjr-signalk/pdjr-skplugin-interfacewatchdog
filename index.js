@@ -60,25 +60,27 @@ module.exports = function(app) {
 
             // Check interface to make sure it has some activity
             if ((hasBeenActive == 0) && (throughput > 0.0)) {
-              console.log("interface '" + options.interface + "' is active; watching throughput (threshold = %d, restart = %s)", options.interface, options.threshold, options.restart);
+              log.N("interface '%s' is active; watching throughput (threshold = %d, restart = %s)", options.interface, options.threshold, options.restart, false);
 	      hasBeenActive = 1;
 	    }
 		  
             // If interface is active, then monitor throughput
-	    if ((hasBeenActive == 1) && (parseInt(throughput) <= options.threshold)) {
-              console.log(PLUGIN_ID + ": throughput on '" + options.interface + "' dropped below threshold");
-              if (!issued) {
-                notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold");
-	        issued = 1;
-	      }
-              if (options.restart) {
-                console.log(PLUGIN_ID + ": restarting Signal K");
-	        process.exit(0);
-              } 
-            } else {
-              if (issued) {
-                notification.cancel(options.notificationpath);
-		issued = 0;
+	    if (hasBeenActive == 1) {
+	      if (parseInt(throughput) <= options.threshold) {
+                log.N("throughput on '%s' dropped below threshold", options.interface, false);
+                if (!alarmIssued) {
+                  notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold");
+	          alarmIssued = 1;
+	        }
+                if (options.restart) {
+                  log.N("restarting Signal K", false);
+	          process.exit(0);
+                } 
+              } else {
+                if (alarmIssued) {
+                  notification.cancel(options.notificationpath);
+		  alarmIssued = 0;
+	        }
 	      }
             }
           }
