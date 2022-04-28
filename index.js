@@ -20,11 +20,10 @@ const Notification = require("./lib/signalk-libnotification/Notification.js");
 
 const PLUGIN_ID = "interfacewatchdog";
 const PLUGIN_NAME = "Signal K interface activity watchdog";
-const PLUGIN_DESCRIPTION = "Monitor a Signal K interface for anomalous changes in throughput";
+const PLUGIN_DESCRIPTION = "Monitor a Signal K interface for anomalous drops in activity";
 
 const PLUGIN_SCHEMA_FILE = __dirname + "/schema.json";
 const PLUGIN_UISCHEMA_FILE = __dirname + "/uischema.json";
-const PLUGIN_DEBUG_TOKENS = [  ];
 
 module.exports = function(app) {
   var plugin = {};
@@ -47,18 +46,26 @@ module.exports = function(app) {
   }
 
   plugin.start = function(options) {
-    var started = 0;
-    var issued = 0;
+    var hasBeenActive = 0;
+    var alarmIssued = 0;
 
     if (options) {
-      log.N("Watching '%s' (threshold = %d, restart = %s)", options.interface, options.threshold, options.restart);
+      log.N("Started (interface = '%s', threshold = %d, reboot = %s)", options.interface, options.threshold, options.restart);
       notification.cancel(options.notificationpath);
+	    
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
           if (e.data.providerStatistics[options.interface].deltaRate !== undefined) {
             var throughput = e.data.providerStatistics[options.interface].deltaRate;
-            if ((started == 0) && (throughput > 0.0)) started = 1;
-	    if ((started == 1) && (parseInt(throughput) <= options.threshold)) {
+
+            // Check interface to make sure it has some activity
+            if ((hasBeenActive == 0) && (throughput > 0.0)) {
+              console.log("interface '" + options.interface + "' is active; watching throughput (threshold = %d, restart = %s)", options.interface, options.threshold, options.restart);
+	      hasBeenActive = 1;
+	    }
+		  
+            // If interface is active, then monitor throughput
+	    if ((hasBeenActive == 1) && (parseInt(throughput) <= options.threshold)) {
               console.log(PLUGIN_ID + ": throughput on '" + options.interface + "' dropped below threshold");
               if (!issued) {
                 notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold");
