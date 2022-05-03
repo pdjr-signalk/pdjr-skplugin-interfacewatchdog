@@ -50,7 +50,7 @@ module.exports = function(app) {
     var alarmIssued = 0;
 
     if (options) {
-      log.N("Started (interface = '%s', threshold = %d, reboot = %s)", options.interface, options.threshold, options.restart);
+      log.N("monitoring throughput on interface '%s' (threshold = %d, reboot = %s)", options.interface, options.threshold, options.restart);
       notification.cancel(options.notificationpath);
             
       app.on('serverevent', (e) => {
