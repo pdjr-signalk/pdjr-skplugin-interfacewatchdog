@@ -40,6 +40,7 @@ notificationpath | The path under `vessels.self` on which the plugin should issu
 3. If the detected throughput is less than or equal to *threshold*
    then an alarm notification is issued on *notificationpath* and,
    if *restart* is true, the host Node process is killed.
+   Otherwise, a normal notification is issued on *notificationpath*.
    
 Note that:
 
@@ -51,7 +52,7 @@ Note that:
   for this behaviour.
 
 * The kill signal is issued approximately one second after the alarm
-  notification is issue on *notificationpath*: this delay is designed to
+  notification is issued on *notificationpath*: this delay is designed to
   allow an alarm handler or annunciator to detect the alarm condition and
   do its thing.
 
