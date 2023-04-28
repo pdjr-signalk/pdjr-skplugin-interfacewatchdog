@@ -89,7 +89,6 @@ module.exports = function(app) {
                   
             // If interface is active, then monitor throughput
             if (hasBeenActive == 1) {
-<<<<<<< Updated upstream
               if (parseInt(throughput) <= options.threshold) {
                 log.N("throughput on '%s' dropped below threshold", options.interface, false);
                 if (!alarmIssued) {
@@ -102,22 +101,6 @@ module.exports = function(app) {
                 } 
               } else {
                 notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' above threshold", { "state": "normal" });
-=======
-
-
-              if (parseInt(throughput) <= options.threshold) {                                                                                                
-                log.N("throughput on '%s' dropped below threshold", options.interface, false);                                                                
-                if (!alarmIssued) {                                                                                                                           
-                  notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold", { "state": "alarm" });    
-                  alarmIssued = 1;                                                                                                                            
-                }                                                                                                                                             
-                if (options.restart) {                                                                                                                        
-                  log.N("restarting Signal K", false);                                                                                                        
-                  process.exit(0);                                                                                                                            
-                }                                                                                                                                             
-              } else {                                                                                                                                        
-                notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' above threshold", { "state": "normal" });             
->>>>>>> Stashed changes
                 alarmIssued = 0;
               }
             }
