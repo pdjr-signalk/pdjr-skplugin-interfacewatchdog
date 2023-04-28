@@ -50,7 +50,7 @@ module.exports = function(app) {
     var alarmIssued = 0;
 
     if (options) {
-      log.N("monitoring throughput on interface '%s' (threshold = %d, reboot = %s)", options.interface, options.threshold, options.restart);
+      log.N("monitoring '%s' (threshold = %d, reboot = %s)", options.interface, options.threshold, options.restart);
       notification.cancel(options.notificationpath);
             
       app.on('serverevent', (e) => {
@@ -60,7 +60,7 @@ module.exports = function(app) {
 
             // Check interface to make sure it has some activity
             if ((hasBeenActive == 0) && (throughput > 0.0)) {
-              log.N("interface '%s' is active; watching throughput (threshold = %d, restart = %s)", options.interface, options.threshold, options.restart, false);
+              log.N("interface '%s' is alive, watchdog active", options.interface, false);
               hasBeenActive = 1;
             }
                   
