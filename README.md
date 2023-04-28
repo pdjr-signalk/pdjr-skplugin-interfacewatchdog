@@ -1,13 +1,14 @@
 # pdjr-skplugin-interfacewatchdog
 
-Signal K interface activity watchdog.
+Interface activity watchdog for Signal K.
 
 ## Description
 
-**interfacewatchdog** monitors the activity of a specified Signal K interface
-waiting for the connection rate to fall below some specified threshold.
+**pdjr-skplugin-interfacewatchdog** monitors the activity of a
+specified Signal K interface waiting for the connection rate to fall
+below some specified threshold.
 If this happens, the plugin writes a message to the server log, issues a
-notification and optionally restarts the host Signal K server.
+notification, and, optionally, restarts the host Signal K server.
 
 The plugin was designed to monitor interfaces associated with a data
 connection, but can be used against any interface listed in the
@@ -17,8 +18,8 @@ server dashboard connection panel.
 
 The plugin recognises the following configuration properties.
 
-Property         | Description | Default value
----------------- | --- | ---
+Property         | Description | Default
+:--------------- | :---------- | ---
 interface        | The Signal K interface that should be monitored. | 'n2k-on-ve.can-socket'
 threshold        | The data rate (in deltas per second) at or below which the plugin should act. | 0
 restart          | Whether or not the plugin should restart the Signal K host when throughput drops below the specified 'Threshold' value. | true

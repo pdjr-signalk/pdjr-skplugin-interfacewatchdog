@@ -15,15 +15,16 @@
  */
 
 const Log = require("./lib/signalk-liblog/Log.js");
-const Schema = require("./lib/signalk-libschema/Schema.js");
 const Notification = require("./lib/signalk-libnotification/Notification.js");
 
 const PLUGIN_ID = "interfacewatchdog";
-const PLUGIN_NAME = "Signal K interface activity watchdog";
+const PLUGIN_NAME = "Interface activity watchdog";
 const PLUGIN_DESCRIPTION = "Monitor a Signal K interface for anomalous drops in activity";
 
-const PLUGIN_SCHEMA_FILE = __dirname + "/schema.json";
-const PLUGIN_UISCHEMA_FILE = __dirname + "/uischema.json";
+const OPTIONS_INTERFACE_DEFAULT = "n2k-on-ve.can-socket";
+const OPTIONS_THRESHOLD_DEFAULT = 0;
+const OPTIONS_RESTART_DEFAULT =  false;
+const OPTIONS_NOTIFICATIONPATH_DEFAULT = "notifications/" + PLUGIN_ID;
 
 module.exports = function(app) {
   var plugin = {};
@@ -35,21 +36,43 @@ module.exports = function(app) {
   const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
   const notification = new Notification(app, plugin.id, { "state": "alarm", "method": [ ] });
 
-  plugin.schema = function() {
-    var schema = Schema.createSchema(PLUGIN_SCHEMA_FILE);
-    return(schema.getSchema());
-  };
+  plugin.schema = {
+    "title": "Configuration for interfacewatchdog plugin",
+    "type": "object",
+    "required": [ "interface", "threshold", "restart", "notificationpath" ],
+    "properties": {
+      "interface": {
+        "title": "Interface",
+        "type": "string",
+        "default": OPTIONS_INTERFACE_DEFAULT
+        },
+        "threshold": {
+          "title": "Threshold",
+          "type": "number",
+          "default": OPTIONS_THRESHOLD_DEFAULT
+        },
+        "restart": {
+          "title": "Restart",
+          "type": "boolean",
+          "default": OPTIONS_RESTART_DEFAULT
+        },
+        "notificationpath": {
+          "title": "Notification path",
+          "type": "string",
+          "default": OPTIONS_NOTIFICATIONPATH_DEFAULT
+        }
+      }
+    }
+    
 
-  plugin.uiSchema = function() {
-    var schema = Schema.createSchema(PLUGIN_UISCHEMA_FILE);
-    return(schema.getSchema());
-  }
+  plugin.uiSchema = {}
 
   plugin.start = function(options) {
     var hasBeenActive = 0;
     var alarmIssued = 0;
 
     if (options) {
+      
       log.N("monitoring '%s' (threshold = %d, reboot = %s)", options.interface, options.threshold, options.restart);
       notification.cancel(options.notificationpath);
             
