@@ -92,7 +92,7 @@ module.exports = function(app) {
               if (parseInt(throughput) <= options.threshold) {
                 log.N("throughput on '%s' dropped below threshold", options.interface, false);
                 if (!alarmIssued) {
-                  notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold");
+                  notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold", { "state": "alarm" });
                   alarmIssued = 1;
                 }
                 if (options.restart) {
@@ -100,10 +100,8 @@ module.exports = function(app) {
                   process.exit(0);
                 } 
               } else {
-                if (alarmIssued) {
-                  notification.cancel(options.notificationpath);
-                  alarmIssued = 0;
-                }
+                notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' above threshold", { "state": "normal" });
+                alarmIssued = 0;
               }
             }
           }
