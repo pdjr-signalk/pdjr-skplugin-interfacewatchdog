@@ -31,8 +31,7 @@
     "schema.json",
     "uischema.json",
     "lib/signalk-libnotification/Notification.js",
-    "lib/signalk-liblog/Log.js",
-    "lib/signalk-libschema/Schema.js"
+    "lib/signalk-liblog/Log.js"
   ],
   "directories": {
     "lib": "lib"
