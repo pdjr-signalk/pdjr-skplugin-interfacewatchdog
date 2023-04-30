@@ -64,14 +64,13 @@ Note that:
   automatically if the host operating system's process manager is configured
   for this behaviour.
 
-* The kill signal is issued approximately one second after the alarm
-  notification is issued on *notificationpath*: this delay is designed to
-  allow an alarm handler or annunciator to detect the alarm condition and
-  do its thing.
+* A kill signal is issued approximately one second after the associated
+  alarm notification: this delay is designed to allow an alarm handler or
+  annunciator to detect the alarm condition and do its thing.
 
 * The event handler which detects interface throughput cannot update plugin
   status information in the Signal K Dashboard, so the only plugin status
-  messages you will see on the server dashboard are those associated with
+  messages displayed on the server dashboard are those associated with
   plugin initialisation.
 
 ## Author
