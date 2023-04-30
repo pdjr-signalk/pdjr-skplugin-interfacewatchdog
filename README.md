@@ -2,6 +2,19 @@
 
 Interface activity watchdog for Signal K.
 
+## Background
+
+I had a problem on my ship where a buggy N2K device was occasionally
+issuing a broken PGN which in-turn caused Signal K's CAN interface driver
+(in my case 'canboatjs') to lock-up.
+
+This plugin was designed to automatically restart Signal K when an
+interface lock-up was detected and so stop the problem becoming a major
+issue until the underlying bugs can be diagnosed and fixed.
+
+The bugs may now have been fixed, but I still run the plugin just in
+case...
+
 ## Description
 
 **pdjr-skplugin-interfacewatchdog** monitors the activity of a
@@ -60,17 +73,6 @@ Note that:
   status information in the Signal K Dashboard, so the only plugin status
   messages you will see on the server dashboard are those associated with
   plugin initialisation.
-
-## Background
-
-The plugin was written as a tool to help diagnose a problem on my own
-vessel where a suspected buggy N2K device is occasionally issuing a
-broken PGN which in-turn causes Signal K's CAN interface driver (in my
-case 'canboatjs') to lock-up.
-
-Automatically restarting Signal K when an interface lock-up is detected
-stops the problem becoming a major issue until the inferred 'canboatjs'
-bug can be diagnosed and fixed. 
 
 ## Author
 
