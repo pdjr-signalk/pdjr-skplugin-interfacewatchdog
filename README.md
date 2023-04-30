@@ -5,8 +5,8 @@ Interface activity watchdog for Signal K.
 ## Background
 
 I had a problem on my ship where a buggy N2K device was occasionally
-issuing a broken PGN which in-turn caused Signal K's CAN interface driver
-(in my case 'canboatjs') to lock-up.
+issuing a broken PGN which in-turn caused Signal K's CAN interface
+driver (in my case 'canboatjs') to lock-up.
 
 This plugin was designed to automatically restart Signal K when an
 interface lock-up was detected and so stop the problem becoming a major
