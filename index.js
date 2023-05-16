@@ -21,10 +21,13 @@ const PLUGIN_ID = "interfacewatchdog";
 const PLUGIN_NAME = "Interface activity watchdog";
 const PLUGIN_DESCRIPTION = "Monitor a Signal K interface for anomalous drops in activity";
 
-const OPTIONS_INTERFACE_DEFAULT = "n2k-on-ve.can-socket";
-const OPTIONS_THRESHOLD_DEFAULT = 0;
-const OPTIONS_RESTART_DEFAULT =  false;
-const OPTIONS_NOTIFICATIONPATH_DEFAULT = "notifications/" + PLUGIN_ID;
+const OPTIONS_INTERFACES_DEFAULT = [
+  {
+    "interface": "n2k-on-ve.can-socket",
+    "threshold": 0,
+    "restart": false
+  }
+];
 
 module.exports = function(app) {
   var plugin = {};
@@ -39,32 +42,29 @@ module.exports = function(app) {
   plugin.schema = {
     "title": "Configuration for interfacewatchdog plugin",
     "type": "object",
-    "required": [ "interface", "threshold", "restart", "notificationpath" ],
     "properties": {
       "interfaces": {
         "type": "array",
+        "default": OPTIONS_INTERFACES_DEFAULT,
         "items": {
           "type": "opject",
+          "required": [ "interface", "threshold", "restart" ],
           "properties": {
             "interface": {
               "title": "Interface",
-              "type": "string",
-              "default": OPTIONS_INTERFACE_DEFAULT
+              "type": "string"
             },
             "threshold": {
               "title": "Threshold",
-              "type": "number",
-              "default": OPTIONS_THRESHOLD_DEFAULT
+              "type": "number"
             },
             "restart": {
               "title": "Restart",
-              "type": "boolean",
-              "default": OPTIONS_RESTART_DEFAULT
+              "type": "boolean"
             },
             "notificationpath": {
               "title": "Notification path",
-              "type": "string",
-              "default": OPTIONS_NOTIFICATIONPATH_DEFAULT
+              "type": "string"
             }
           }
         }
@@ -77,15 +77,16 @@ module.exports = function(app) {
   plugin.start = function(options) {
     if (options) {
       
-      log.N("monitoring %s interface%s (see log for configuration details)", options.interfaces.length, (options.interfaces.length == 1)?"":"s");
       options.interfaces.forEach(interface => {
         interface.hasBeenActive = 0;
         interface.alarmIssued = 0;
+        interface.notificationpath = (interface.notificationpath)?interface.notificationpath:("notifications." + PLUGIN_ID + "." + interface.interface);
         log.N("monitoring '%s' interface (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
+        notification.cancel(interface.notificationpath);
       });
-      
-      notification.cancel(options.notificationpath);
             
+      log.N("monitoring %s interface%s (see log for configuration details)", options.interfaces.length, (options.interfaces.length == 1)?"":"s");
+
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
           options.interfaces.forEach(interface => {

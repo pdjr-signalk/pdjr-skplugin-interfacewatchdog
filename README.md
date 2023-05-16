@@ -38,7 +38,7 @@ Property         | Description |
 interface        | The name of the Signal K interface that should be monitored. |
 threshold        | The data rate (in deltas per second) at or below which the plugin should act. |
 restart          | Whether or not the plugin should restart the Signal K host when throughput drops below the specified 'threshold' value. |
-notificationpath | The path under `vessels.self` on which the plugin should issue alarm notifications. |
+notificationpath | This optional property can be used to specify the path under `vessels.self` on which the plugin should issue alarm notifications. If omitted, then the path "notifications.interfacewatchdog.*interface*" will be used. |
 
 A new installation will have a single array entry:
 
@@ -47,8 +47,7 @@ A new installation will have a single array entry:
   {
     "interface": "n2k-on-ve.can-socket",
     "threshold": 0,
-    "restart": true,
-    "notificationpath": "notifications.interfacewatchdog"
+    "restart": true
   }
 ]
 ```
