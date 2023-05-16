@@ -31,14 +31,14 @@ server dashboard connection panel.
 
 The plugin configuration consist of an "interfaces" array, each item of
 which supplies configuration properties for an interface that should be
-monitored.
+monitored:
 
 Property         | Description |
 :--------------- | :---------- |
 interface        | The name of the Signal K interface that should be monitored. |
 threshold        | The data rate (in deltas per second) at or below which the plugin should act. |
-restart          | Whether or not the plugin should restart the Signal K host when throughput drops below the specified 'threshold' value. |
-notificationpath | This optional property can be used to specify the path under `vessels.self` on which the plugin should issue alarm notifications. If omitted, then the path "notifications.interfacewatchdog.*interface*" will be used. |
+restart          | Whether or not the plugin should restart the Signal K host when throughput drops below the specified *threshold*. |
+notificationpath | This optional property can be used to specify the path under `vessels.self.` on which the plugin should issue alarm notifications. If omitted, then the path "notifications.interfacewatchdog.*interface*" will be used. |
 
 A new installation will have a single array entry:
 

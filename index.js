@@ -21,13 +21,11 @@ const PLUGIN_ID = "interfacewatchdog";
 const PLUGIN_NAME = "Interface activity watchdog";
 const PLUGIN_DESCRIPTION = "Monitor a Signal K interface for anomalous drops in activity";
 
-const OPTIONS_INTERFACES_DEFAULT = [
-  {
-    "interface": "n2k-on-ve.can-socket",
-    "threshold": 0,
-    "restart": false
-  }
-];
+const OPTIONS_CONFIGURATION_DEFAULT = {
+  "interfaces": [
+    { "interface": "n2k-on-ve.can-socket", "threshold": 0, "restart": true }
+  ]
+};
 
 module.exports = function(app) {
   var plugin = {};
@@ -42,10 +40,10 @@ module.exports = function(app) {
   plugin.schema = {
     "title": "Configuration for interfacewatchdog plugin",
     "type": "object",
+    "default": OPTIONS_CONFIGURATION_DEFAULT,
     "properties": {
       "interfaces": {
         "type": "array",
-        "default": OPTIONS_INTERFACES_DEFAULT,
         "items": {
           "type": "opject",
           "required": [ "interface", "threshold", "restart" ],
@@ -109,7 +107,7 @@ module.exports = function(app) {
                   }
                   if (interface.restart) {
                     log.N("restarting Signal K", false);
-                    process.exit(0);
+                    setTimeout(() => { process.exit(0); }, 1000);
                   } 
                 } else {
                   notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' above threshold", { "state": "normal" });
