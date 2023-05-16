@@ -82,7 +82,7 @@ module.exports = function(app) {
         interface.alarmIssued = 0;
         interface.notificationpath = (interface.notificationpath)?interface.notificationpath:("notifications." + PLUGIN_ID + "." + interface.interface);
         log.N("monitoring '%s' interface (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
-        notification.cancel(interface.notificationpath);
+        notification.issue(interface.notificationpath, "Waiting for interface to become active", { "state": "normal" });
       });
             
       log.N("monitoring %s interface%s (see log for configuration details)", options.interfaces.length, (options.interfaces.length == 1)?"":"s");
