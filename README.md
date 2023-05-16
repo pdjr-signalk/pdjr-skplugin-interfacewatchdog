@@ -65,7 +65,7 @@ A new installation will have a single array entry:
    every four or five seconds). You can view these activity values in
    the Signal K dashboard.
 
-3. If the throughput trported by the server is less than or equal to
+3. If the throughput reported by the server is less than or equal to
    the configured interface threshold then an alarm notification is
    issued on the configured notification path and, if restart is
    enabled, the host Node process is killed.
