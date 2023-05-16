@@ -41,70 +41,82 @@ module.exports = function(app) {
     "type": "object",
     "required": [ "interface", "threshold", "restart", "notificationpath" ],
     "properties": {
-      "interface": {
-        "title": "Interface",
-        "type": "string",
-        "default": OPTIONS_INTERFACE_DEFAULT
-        },
-        "threshold": {
-          "title": "Threshold",
-          "type": "number",
-          "default": OPTIONS_THRESHOLD_DEFAULT
-        },
-        "restart": {
-          "title": "Restart",
-          "type": "boolean",
-          "default": OPTIONS_RESTART_DEFAULT
-        },
-        "notificationpath": {
-          "title": "Notification path",
-          "type": "string",
-          "default": OPTIONS_NOTIFICATIONPATH_DEFAULT
+      "interfaces": {
+        "type": "array",
+        "items": {
+          "type": "opject",
+          "properties": {
+            "interface": {
+              "title": "Interface",
+              "type": "string",
+              "default": OPTIONS_INTERFACE_DEFAULT
+            },
+            "threshold": {
+              "title": "Threshold",
+              "type": "number",
+              "default": OPTIONS_THRESHOLD_DEFAULT
+            },
+            "restart": {
+              "title": "Restart",
+              "type": "boolean",
+              "default": OPTIONS_RESTART_DEFAULT
+            },
+            "notificationpath": {
+              "title": "Notification path",
+              "type": "string",
+              "default": OPTIONS_NOTIFICATIONPATH_DEFAULT
+            }
+          }
         }
       }
     }
+  }
     
-
   plugin.uiSchema = {}
 
   plugin.start = function(options) {
-    var hasBeenActive = 0;
-    var alarmIssued = 0;
-
     if (options) {
       
-      log.N("monitoring '%s' (threshold = %d, reboot = %s)", options.interface, options.threshold, options.restart);
+      log.N("monitoring %s interface%s (see log for configuration details)", options.interfaces.length, (options.interfaces.length == 1)?"":"s");
+      options.interfaces.forEach(interface => {
+        interface.hasBeenActive = 0;
+        interface.alarmIssued = 0;
+        log.N("monitoring '%s' interface (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
+      });
+      
       notification.cancel(options.notificationpath);
             
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
-          if (e.data.providerStatistics[options.interface].deltaRate !== undefined) {
-            var throughput = e.data.providerStatistics[options.interface].deltaRate;
+          options.interfaces.forEach(interface => {
+            if (e.data.providerStatistics[interface.interface].deltaRate !== undefined) {
+              var throughput = e.data.providerStatistics[interface.interface].deltaRate;
 
-            // Check interface to make sure it has some activity
-            if ((hasBeenActive == 0) && (throughput > 0.0)) {
-              log.N("interface '%s' is alive, watchdog active", options.interface, false);
-              hasBeenActive = 1;
-            }
+              // Check interface to make sure it has some activity
+              if ((interface.hasBeenActive == 0) && (throughput > 0.0)) {
+                log.N("interface '%s' is alive, watchdog active", interface.interface, false);
+                interface.hasBeenActive = 1;
+              }
                   
-            // If interface is active, then monitor throughput
-            if (hasBeenActive == 1) {
-              if (parseInt(throughput) <= options.threshold) {
-                log.N("throughput on '%s' dropped below threshold", options.interface, false);
-                if (!alarmIssued) {
-                  notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' dropped below threshold", { "state": "alarm" });
-                  alarmIssued = 1;
+              // If interface is active, then monitor throughput
+              if (interface.hasBeenActive == 1) {
+                if (parseInt(throughput) <= interface.threshold) {
+                  log.N("throughput on '%s' dropped below threshold", interface.interface, false);
+                  if (!interface.alarmIssued) {
+                    notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' dropped below threshold", { "state": "alarm" });
+                    interface.alarmIssued = 1;
+                  }
+                  if (interface.restart) {
+                    log.N("restarting Signal K", false);
+                    process.exit(0);
+                  } 
+                } else {
+                  notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' above threshold", { "state": "normal" });
+                  interface.alarmIssued = 0;
                 }
-                if (options.restart) {
-                  log.N("restarting Signal K", false);
-                  process.exit(0);
-                } 
-              } else {
-                notification.issue(options.notificationpath, "Throughput on '" + options.interface + "' above threshold", { "state": "normal" });
-                alarmIssued = 0;
               }
             }
-          }
+          });
         }
       });
     } else {
