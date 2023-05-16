@@ -73,7 +73,9 @@ module.exports = function(app) {
   plugin.uiSchema = {}
 
   plugin.start = function(options) {
-    if (options) {
+    if ((options) && (options.interfaces)) {
+
+      log.N("monitoring %s interface%s (see log for configuration details)", options.interfaces.length, (options.interfaces.length == 1)?"":"s");
       
       options.interfaces.forEach(interface => {
         interface.hasBeenActive = 0;
@@ -83,8 +85,6 @@ module.exports = function(app) {
         notification.issue(interface.notificationpath, "Waiting for interface to become active", { "state": "normal" });
       });
             
-      log.N("monitoring %s interface%s (see log for configuration details)", options.interfaces.length, (options.interfaces.length == 1)?"":"s");
-
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
           options.interfaces.forEach(interface => {
