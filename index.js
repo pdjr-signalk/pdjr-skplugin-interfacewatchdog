@@ -73,53 +73,58 @@ module.exports = function(app) {
   plugin.uiSchema = {}
 
   plugin.start = function(options) {
-    if ((options) && (options.interfaces)) {
-
-      log.N("monitoring %s interface%s (see log for configuration details)", options.interfaces.length, (options.interfaces.length == 1)?"":"s");
+    if (options) {
       
-      options.interfaces.forEach(interface => {
-        interface.hasBeenActive = 0;
-        interface.alarmIssued = 0;
-        interface.notificationpath = (interface.notificationpath)?interface.notificationpath:("notifications." + PLUGIN_ID + "." + interface.interface);
-        log.N("monitoring '%s' interface (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
-        notification.issue(interface.notificationpath, "Waiting for interface to become active", { "state": "normal" });
-      });
-            
-      app.on('serverevent', (e) => {
-        if ((e.type) && (e.type == "SERVERSTATISTICS")) {
-          options.interfaces.forEach(interface => {
-            if (e.data.providerStatistics[interface.interface].deltaRate !== undefined) {
-              var throughput = e.data.providerStatistics[interface.interface].deltaRate;
+      if (!options.interfaces) options = versionOneCompatabilityFix(options);
+  
+      if (options.interfaces) {
 
-              // Check interface to make sure it has some activity
-              if ((interface.hasBeenActive == 0) && (throughput > 0.0)) {
-                log.N("interface '%s' is alive, watchdog active", interface.interface, false);
-                interface.hasBeenActive = 1;
-              }
+        log.N("monitoring %s interface%s (see log for configuration details)", options.interfaces.length, (options.interfaces.length == 1)?"":"s");
+      
+        options.interfaces.forEach(interface => {
+          interface.hasBeenActive = 0;
+          interface.alarmIssued = 0;
+          interface.notificationpath = (interface.notificationpath)?interface.notificationpath:("notifications." + PLUGIN_ID + "." + interface.interface);
+          log.N("monitoring '%s' interface (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
+          notification.issue(interface.notificationpath, "Waiting for interface to become active", { "state": "normal" });
+        });
+            
+        app.on('serverevent', (e) => {
+          if ((e.type) && (e.type == "SERVERSTATISTICS")) {
+            options.interfaces.forEach(interface => {
+              if (e.data.providerStatistics[interface.interface].deltaRate !== undefined) {
+                var throughput = e.data.providerStatistics[interface.interface].deltaRate;
+
+                // Check interface to make sure it has some activity
+                if ((interface.hasBeenActive == 0) && (throughput > 0.0)) {
+                  log.N("interface '%s' is alive, watchdog active", interface.interface, false);
+                  interface.hasBeenActive = 1;
+                }
                   
-              // If interface is active, then monitor throughput
-              if (interface.hasBeenActive == 1) {
-                if (parseInt(throughput) <= interface.threshold) {
-                  log.N("throughput on '%s' dropped below threshold", interface.interface, false);
-                  if (!interface.alarmIssued) {
-                    notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' dropped below threshold", { "state": "alarm" });
-                    interface.alarmIssued = 1;
+                // If interface is active, then monitor throughput
+                if (interface.hasBeenActive == 1) {
+                  if (parseInt(throughput) <= interface.threshold) {
+                    log.N("throughput on '%s' dropped below threshold", interface.interface, false);
+                    if (!interface.alarmIssued) {
+                      notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' dropped below threshold", { "state": "alarm" });
+                      interface.alarmIssued = 1;
+                    }
+                    if (interface.restart) {
+                      log.N("restarting Signal K", false);
+                      setTimeout(() => { process.exit(0); }, 1000);
+                    } 
+                  } else {
+                    notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' above threshold", { "state": "normal" });
+                    interface.alarmIssued = 0;
                   }
-                  if (interface.restart) {
-                    log.N("restarting Signal K", false);
-                    setTimeout(() => { process.exit(0); }, 1000);
-                  } 
-                } else {
-                  notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' above threshold", { "state": "normal" });
-                  interface.alarmIssued = 0;
                 }
               }
-            }
-          });
-        }
-      });
-    } else {
-      log.E("bad or missing configuration");
+            });
+          }
+        });
+      } else {
+        log.E("bad or missing configuration");
+      }
     }
   }
 
@@ -127,4 +132,11 @@ module.exports = function(app) {
   }
 
   return(plugin);
+}
+
+function versionOneCompatabilityFix(options) {
+  if ((options.interface) && (options.threshold) && (options.restart) && (options.notification)) {
+    options.interfaces = [{ "interface": options.interface, "threshold": options.threshold, "reboot": options.reboot, "notification": options.notification }];
+  }
+  return(options);
 }
