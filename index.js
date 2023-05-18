@@ -20,8 +20,40 @@ const Notification = require("./lib/signalk-libnotification/Notification.js");
 const PLUGIN_ID = "interfacewatchdog";
 const PLUGIN_NAME = "Interface activity watchdog";
 const PLUGIN_DESCRIPTION = "Monitor a Signal K interface for anomalous drops in activity";
+const PLUGIN_SCHEMA = {
+  "title": "Configuration for interfacewatchdog plugin",
+  "type": "object",
+  "properties": {
+    "interfaces": {
+      "type": "array",
+      "items": {
+        "type": "opject",
+        "required": [ "interface", "threshold", "restart" ],
+        "properties": {
+          "interface": {
+            "title": "Interface",
+            "type": "string"
+          },
+          "threshold": {
+            "title": "Threshold",
+            "type": "number"
+          },
+          "restart": {
+            "title": "Restart",
+            "type": "boolean"
+          },
+          "notificationpath": {
+            "title": "Notification path",
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+};
+const PLUGIN_UISCHEMA = {};
 
-const OPTIONS_CONFIGURATION_DEFAULT = {
+const OPTIONS_INTERFACES_DEFAULT = {
   "interfaces": [
     { "interface": "n2k-on-ve.can-socket", "threshold": 0, "restart": true }
   ]
@@ -33,49 +65,20 @@ module.exports = function(app) {
   plugin.id = PLUGIN_ID;
   plugin.name = PLUGIN_NAME;
   plugin.description = PLUGIN_DESCRIPTION;
-
-  const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
-  const notification = new Notification(app, plugin.id, { "state": "alarm", "method": [ ] });
-
-  plugin.schema = {
-    "title": "Configuration for interfacewatchdog plugin",
-    "type": "object",
-    "default": OPTIONS_CONFIGURATION_DEFAULT,
-    "properties": {
-      "interfaces": {
-        "type": "array",
-        "items": {
-          "type": "opject",
-          "required": [ "interface", "threshold", "restart" ],
-          "properties": {
-            "interface": {
-              "title": "Interface",
-              "type": "string"
-            },
-            "threshold": {
-              "title": "Threshold",
-              "type": "number"
-            },
-            "restart": {
-              "title": "Restart",
-              "type": "boolean"
-            },
-            "notificationpath": {
-              "title": "Notification path",
-              "type": "string"
-            }
-          }
-        }
-      }
-    }
-  }
-    
-  plugin.uiSchema = {}
+  plugin.schema = PLUGIN_SCHEMA;
+  plugin.uiSchema = PLUGIN_UISCHEMA;
 
   plugin.start = function(options) {
+    const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
+    var notification = new Notification(app, plugin.id, { "state": "alarm", "method": [ ] });
+
     if (options) {
       
-      if (!options.interfaces) options = versionOneCompatabilityFix(options);
+      if (!options.interfaces) {
+        options = versionOneCompatabilityFix(options);
+        if (!options.interfaces) options.interfaces = OPTIONS_INTERFACES_DEFAULT;
+        app.savePluginOptions(options, () => log.N("saving default configuration to disk"));
+      }
   
       if (options.interfaces) {
 
@@ -131,12 +134,16 @@ module.exports = function(app) {
   plugin.stop = function() {
   }
 
-  return(plugin);
-}
-
-function versionOneCompatabilityFix(options) {
-  if ((options.interface) && (options.threshold) && (options.restart) && (options.notification)) {
-    options.interfaces = [{ "interface": options.interface, "threshold": options.threshold, "reboot": options.reboot, "notification": options.notification }];
+  function versionOneCompatabilityFix(options) {
+    if ((options.interface) && (options.threshold) && (options.restart) && (options.notification)) {
+      options.interfaces = [{ "interface": options.interface, "threshold": options.threshold, "reboot": options.reboot, "notification": options.notification }];
+      delete options.interface;
+      delete options.threshold;
+      delete options.restart;
+      delete options.notification;
+    }
+    return(options);
   }
-  return(options);
+
+  return(plugin);
 }
