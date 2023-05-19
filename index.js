@@ -73,7 +73,7 @@ module.exports = function(app) {
 
   plugin.start = function(options) {
 
-    if (Object.keys(options).length === 0 { // Config file is missing
+    if (Object.keys(options).length === 0) { // Config file is missing
       options = OPTIONS_DEFAULT;
       app.savePluginOptions(options, () => log.N("using default configuration (and saving it to disk)"));
     } else {
