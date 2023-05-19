@@ -68,9 +68,10 @@ module.exports = function(app) {
   plugin.schema = PLUGIN_SCHEMA;
   plugin.uiSchema = PLUGIN_UISCHEMA;
 
+  const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
+  const notification = new Notification(app, plugin.id, { "state": "alarm", "method": [ ] });
+
   plugin.start = function(options) {
-    const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
-    var notification = new Notification(app, plugin.id, { "state": "alarm", "method": [ ] });
 
     if (options) {
       
