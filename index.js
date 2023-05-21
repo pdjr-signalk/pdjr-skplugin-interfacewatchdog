@@ -87,8 +87,9 @@ module.exports = function(app) {
       }
     }
   
-    if (options.interfaces) {
-      log.N("monitoring %d interface%s (see log for configuration details)", options.interfaces.length, (options.interfaces.length == 1)?"":"s");
+    if ((options.interfaces) && (Array.isArray(options.interfaces)) && (options.interfaces.length > 0)) {
+
+      log.N("monitoring %d interface%s (see log for configuration details)", options.interfaces.length, ((options.interfaces.length == 1)?"":"s"));
       
       options.interfaces.forEach(interface => {
         interface.hasBeenActive = 0;
