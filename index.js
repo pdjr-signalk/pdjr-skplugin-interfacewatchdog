@@ -75,7 +75,7 @@ module.exports = function(app) {
 
     if (Object.keys(options).length === 0) { // Config file is missing
       options = OPTIONS_DEFAULT;
-      app.savePluginOptions(options, () => log.N("using default configuration (and saving it to disk)"));
+      app.savePluginOptions(options, () => log.N("installing default configuration", false));
     } else {
       if ((options.interface) && (options.threshold) && (options.restart) && (options.notification)) {
         options.interfaces = [{ "interface": options.interface, "threshold": options.threshold, "reboot": options.reboot, "notification": options.notification }];
@@ -83,19 +83,19 @@ module.exports = function(app) {
         delete options.threshold;
         delete options.restart;
         delete options.notification;
-        app.savePluginOptions(options, () => log.N("using legacy configuration (and saving updated version to disk)"));
+        app.savePluginOptions(options, () => log.N("updating legacy configuration", false));
       }
     }
   
     if ((options.interfaces) && (Array.isArray(options.interfaces)) && (options.interfaces.length > 0)) {
 
-      log.N("monitoring %d interface%s (see log for configuration details)", options.interfaces.length, ((options.interfaces.length == 1)?"":"s"));
+      log.N("watching %d interface%s (see log for details)", options.interfaces.length, ((options.interfaces.length == 1)?"":"s"));
       
       options.interfaces.forEach(interface => {
         interface.hasBeenActive = 0;
         interface.alarmIssued = 0;
         interface.notificationpath = (interface.notificationpath)?interface.notificationpath:("notifications." + PLUGIN_ID + "." + interface.interface);
-        log.N("monitoring '%s' interface (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
+        log.N("watching interface '%s' (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
         notification.issue(interface.notificationpath, "Waiting for interface to become active", { "state": "normal" });
       });
             
