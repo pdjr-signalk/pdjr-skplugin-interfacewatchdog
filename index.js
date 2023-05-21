@@ -27,7 +27,7 @@ const PLUGIN_SCHEMA = {
     "interfaces": {
       "type": "array",
       "items": {
-        "type": "opject",
+        "type": "object",
         "required": [ "interface", "threshold", "restart" ],
         "properties": {
           "interface": {
