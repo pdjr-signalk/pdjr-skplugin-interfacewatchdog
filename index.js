@@ -90,7 +90,7 @@ module.exports = function(app) {
     if ((options.interfaces) && (Array.isArray(options.interfaces)) && (options.interfaces.length > 0)) {
 
       if (options.interfaces.length == 1) {
-        log.N("watching interface '%s' (threshold = %d, reboot = %s)", interfaces[0].interface, interfaces[0].threshold, interfaces[0].restart);
+        log.N("watching interface '%s' (threshold = %d, reboot = %s)", options.interfaces[0].interface, options.interfaces[0].threshold, options.interfaces[0].restart);
       } else {
         log.N("watching multiple interfaces (see log for details)");
       }
