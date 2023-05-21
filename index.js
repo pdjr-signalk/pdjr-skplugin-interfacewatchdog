@@ -89,7 +89,11 @@ module.exports = function(app) {
   
     if ((options.interfaces) && (Array.isArray(options.interfaces)) && (options.interfaces.length > 0)) {
 
-      log.N("watching %d interface%s (see log for details)", options.interfaces.length, ((options.interfaces.length == 1)?"":"s"));
+      if (options.interfaces.length == 1) {
+        log.N("watching interface '%s' (threshold = %d, reboot = %s)", interfaces[0].interface, interfaces[0].threshold, interfaces[0].restart);
+      } else {
+        log.N("watching multiple interfaces (see log for details)");
+      }
       
       options.interfaces.forEach(interface => {
         interface.hasBeenActive = 0;
