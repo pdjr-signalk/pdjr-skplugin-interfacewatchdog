@@ -49,14 +49,12 @@ const PLUGIN_SCHEMA = {
         }
       }
     }
+  },
+  "default": {
+    "interfaces": []
   }
 };
 const PLUGIN_UISCHEMA = {};
-
-const OPTIONS_DEFAULT = {
-  "interfaces": [
-  ]
-};
 
 module.exports = function(app) {
   var plugin = {};
@@ -71,61 +69,63 @@ module.exports = function(app) {
   const notification = new Notification(app, plugin.id, { "state": "alarm", "method": [ ] });
 
   plugin.start = function(options) {
-    if ((options) && (options.interfaces) && (Array.isArray(options.interfaces))) {
-      if (options.interfaces.length > 0) {
-        if (options.interfaces.length == 1) {
-          log.N("started: watching interface '%s' (threshold = %d, reboot = %s)", options.interfaces[0].interface, options.interfaces[0].threshold, options.interfaces[0].restart);
-        } else {
-          log.N("started: watching %d interfaces (see log for details)", options.interfaces.length);
-        }
+    
+    if (Object.keys(options).length === 0) {
+      options = plugin.schema.default;
+      log.N("using default configuration", false);
+    }
+    
+    if ((options.interfaces) && (Array.isArray(options.interfaces)) && (options.interfaces.length > 0)) {
+      if (options.interfaces.length == 1) {
+        log.N("started: watching interface '%s' (threshold = %d, reboot = %s)", options.interfaces[0].interface, options.interfaces[0].threshold, options.interfaces[0].restart);
+      } else {
+        log.N("started: watching %d interfaces (see log for details)", options.interfaces.length);
+      }
       
-        options.interfaces.forEach(interface => {
-          interface.hasBeenActive = 0;
-          interface.alarmIssued = 0;
-          interface.notificationpath = (interface.notificationpath)?interface.notificationpath:("notifications." + PLUGIN_ID + "." + interface.interface);
-          log.N("watching interface '%s' (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
-          notification.issue(interface.notificationpath, "Waiting for interface to become active", { "state": "normal" });
-        });
+      options.interfaces.forEach(interface => {
+        interface.hasBeenActive = 0;
+        interface.alarmIssued = 0;
+        interface.notificationpath = (interface.notificationpath)?interface.notificationpath:("notifications." + PLUGIN_ID + "." + interface.interface);
+        log.N("watching interface '%s' (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
+        notification.issue(interface.notificationpath, "Waiting for interface to become active", { "state": "normal" });
+      });
             
-        app.on('serverevent', (e) => {
-          if ((e.type) && (e.type == "SERVERSTATISTICS")) {
-            options.interfaces.forEach(interface => {
-              if (e.data.providerStatistics[interface.interface].deltaRate !== undefined) {
-                var throughput = e.data.providerStatistics[interface.interface].deltaRate;
+      app.on('serverevent', (e) => {
+        if ((e.type) && (e.type == "SERVERSTATISTICS")) {
+          options.interfaces.forEach(interface => {
+            if (e.data.providerStatistics[interface.interface].deltaRate !== undefined) {
+              var throughput = e.data.providerStatistics[interface.interface].deltaRate;
 
-                // Check interface to make sure it has some activity
-                if ((interface.hasBeenActive == 0) && (throughput > 0.0)) {
-                  log.N("interface '%s' is alive, watchdog active", interface.interface, false);
-                  notification.issue(interface.notificationpath, "Interface is alive, watchdog is active", { "state": "normal" });
-                  interface.hasBeenActive = 1;
-                }
+              // Check interface to make sure it has some activity
+              if ((interface.hasBeenActive == 0) && (throughput > 0.0)) {
+                log.N("interface '%s' is alive, watchdog active", interface.interface, false);
+                notification.issue(interface.notificationpath, "Interface is alive, watchdog is active", { "state": "normal" });
+                interface.hasBeenActive = 1;
+              }
                   
-                // If interface is active, then monitor throughput
-                if (interface.hasBeenActive == 1) {
-                  if (parseInt(throughput) <= interface.threshold) {
-                    log.N("throughput on '%s' dropped below threshold", interface.interface, false);
-                    if (!interface.alarmIssued) {
-                      notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' dropped below threshold", { "state": "alarm" });
-                      interface.alarmIssued = 1;
-                    }
-                    if (interface.restart) {
-                      log.N("restarting Signal K", false);
-                      setTimeout(() => { process.exit(0); }, 1000);
-                    } 
-                  } else {
-                    notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' above threshold", { "state": "normal" });
-                    interface.alarmIssued = 0;
+              // If interface is active, then monitor throughput
+              if (interface.hasBeenActive == 1) {
+                if (parseInt(throughput) <= interface.threshold) {
+                  log.N("throughput on '%s' dropped below threshold", interface.interface, false);
+                  if (!interface.alarmIssued) {
+                    notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' dropped below threshold", { "state": "alarm" });
+                    interface.alarmIssued = 1;
                   }
+                  if (interface.restart) {
+                    log.N("restarting Signal K", false);
+                    setTimeout(() => { process.exit(0); }, 1000);
+                  } 
+                } else {
+                  notification.issue(interface.notificationpath, "Throughput on '" + interface.interface + "' above threshold", { "state": "normal" });
+                  interface.alarmIssued = 0;
                 }
               }
-            });
-          }
-        });
-      } else {
-        log.N("stopped: no interfaces are defined");
-      }
+            }
+          });
+        }
+      });
     } else {
-      log.N("stopped: bad or missing configuration");
+      log.N("stopped: no interfaces are defined");
     }
   }
 
