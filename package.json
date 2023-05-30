@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Signal K interface activity watchdog",
   "main": "index.js",
+  "signalk-plugin-enabled-by-default": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,11 +13,7 @@
   },
   "keywords": [
     "signalk-node-server-plugin",
-    "signalk-category-utility",
-    "signalk",
-    "interface",
-    "watchdog",
-    "plugin"
+    "signalk-category-utility"
   ],
   "author": "Paul Reeve <preeve@pdjr.eu>",
   "license": "Apache-2.0",
