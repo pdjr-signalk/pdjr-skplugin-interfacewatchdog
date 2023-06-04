@@ -43,7 +43,7 @@ notificationpath | This optional property can be used to specify the path under 
 A new installation will have a single array entry:
 
 ```
-[
+"interfaces": [
   {
     "interface": "n2k-on-ve.can-socket",
     "threshold": 0,
