@@ -137,7 +137,7 @@ module.exports = function(app) {
   function upgradeConfiguration(options) {
     if ((options.interface) && (options.threshold) && (options.restart)) {
       options.interfaces = [];
-      options.interfces.push(
+      options.interfaces.push(
         {
           "interface": options.interface,
           "threshold": options.threshold,
