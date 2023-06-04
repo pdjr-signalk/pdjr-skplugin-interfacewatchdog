@@ -69,10 +69,12 @@ module.exports = function(app) {
   const notification = new Notification(app, plugin.id, { "state": "alarm", "method": [ ] });
 
   plugin.start = function(options) {
+
+    options = upgradeConfiguration(options);
     
     if (Object.keys(options).length === 0) {
       options = plugin.schema.default;
-      log.N("using default configuration", false);
+      log.W("using default configuration");
     }
     
     if ((options.interfaces) && (Array.isArray(options.interfaces)) && (options.interfaces.length > 0)) {
@@ -130,6 +132,24 @@ module.exports = function(app) {
   }
 
   plugin.stop = function() {
+  }
+
+  function upgradeConfiguration(options) {
+    if ((options.interface) && (options.threshold) && (options.restart)) {
+      options.interfaces = [];
+      options.interfces.push(
+        {
+          "interface": options.interface,
+          "threshold": options.threshold,
+          "restart": options.restart
+        }
+      );
+      delete options.interface;
+      delete options.threshold;
+      delete options.restart;
+      app.savePluginOptions(options, () => app.debug());
+    }
+    return(options);
   }
 
   return(plugin);

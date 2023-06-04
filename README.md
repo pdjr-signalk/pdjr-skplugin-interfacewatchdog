@@ -53,7 +53,7 @@ A new installation will have a single array entry:
 ```
 
 Configuration files from earlier, single interface, versions of the
-plugin are fully supported.
+plugin are automatically upgraded.
 
 ## Operation
 
