@@ -93,7 +93,7 @@ module.exports = function(app) {
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
           options.interfaces.forEach(interface => {
-            if (e.data.providerStatistics[interface.interface].deltaRate !== undefined) {
+            if ((e.data.providerStatistics[interface.interface]) && (e.data.providerStatistics[interface.interface])) {
               var throughput = e.data.providerStatistics[interface.interface].deltaRate;
 
               // Check interface to make sure it has some activity
@@ -120,6 +120,8 @@ module.exports = function(app) {
                   interface.alarmIssued = 0;
                 }
               }
+            } else {
+              app.debug("provider statistics for interface '%s' are not available", interface.interface);
             }
           });
         }
