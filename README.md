@@ -33,34 +33,21 @@ The plugin configuration consist of an "interfaces" array, each item of
 which supplies configuration properties for an interface that should be
 monitored:
 
-Property         | Description |
-:--------------- | :---------- |
-interface        | The name of the Signal K interface that should be monitored. |
-threshold        | The data rate (in deltas per second) at or below which the plugin should act. |
-restart          | Whether or not the plugin should restart the Signal K host when throughput drops below the specified *threshold*. |
-notificationpath | This optional property can be used to specify the path under `vessels.self.` on which the plugin should issue alarm notifications. If omitted, then the path "notifications.interfacewatchdog.*interface*" will be used. |
+Property         | Default     | Description |
+:--------------- | :---------- | :---------- |
+interface        | (none)      | Required name of the Signal K interface that should be monitored. |
+threshold        | 0           | Optional integer data rate (in deltas per second) at or below which the plugin should act. |
+restart          | false       | Optional boolean saying whether or not the plugin should restart the Signal K host when throughput on *interface* drops below the specified *threshold*. |
+notificationpath | (see below) | Optional path under `vessels.self.` on which the plugin should issue alarm notifications. |
 
-A new installation will have a single array entry:
-
-```
-"interfaces": [
-  {
-    "interface": "n2k-on-ve.can-socket",
-    "threshold": 0,
-    "restart": true
-  }
-]
-```
-
-Configuration files from earlier, single interface, versions of the
-plugin are automatically upgraded.
+If *notificationpath* is omitted, then the path "notifications.interfacewatchdog.*interface*" will be used.
 
 ## Operation
 
 1. The plugin ignores a configured interface until it becomes active.
    This prevents the plugin causing repeated, immediate, restarts on a
    server on which an interface is disconnected or otherwise dead.
-   
+
 2. Once activity is detected on a configured interface the plugin
    checks the throughput statistic reported by Signal K each time the
    server issues a 'serverevent' of type 'SERVERSTATISTICS' (typically
@@ -87,13 +74,8 @@ Note that:
   alarm notification: this delay is designed to allow an alarm handler
   or annunciator to detect the alarm condition and do its thing.
 
-* The event handler which detects interface throughput cannot update
-  plugin status information in the Signal K Dashboard, so the only
-  plugin status message displayed on the server dashboard is that
-  associated with plugin initialisation.
-
 * Actions taken by the plugin are written to the server log.
 
 ## Author
 
-Paul Reeve <preeve_at_pdjr_dot_eu>
+Paul Reeve <*preeve_at_pdjr_dot_eu*>
