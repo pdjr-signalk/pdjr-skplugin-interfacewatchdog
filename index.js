@@ -89,7 +89,7 @@ module.exports = function(app) {
             interface.hasBeenActive = 0;
             interface.alarmIssued = 0;
 
-            log.N("watching interface '%s' (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
+            if (options.interfaces.length > 1) log.N("watching interface '%s' (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
             notification.issue(interface.notificationpath, "Waiting for interface to become active", { "state": "normal" });
           }
         });
