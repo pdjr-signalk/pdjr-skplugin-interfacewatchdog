@@ -29,9 +29,9 @@ The plugin configuration has the following properties.
 
 | Property         | Default     | Description |
 | :--------------- | :---------- | :---------- |
-| interfaces       | []          | Required array of interface configuration objects. |
+| interfaces       | []          | Required array of *interface* objects. |
 
-Each object in the *interfaces* array has the following properties.
+Each *interface* object has the following properties.
 
 | Property         | Default     | Description |
 | :--------------- | :---------- | :---------- |
