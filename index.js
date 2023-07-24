@@ -91,7 +91,8 @@ module.exports = function(app) {
 
             log.N("watching interface '%s' (threshold = %d, reboot = %s)", interface.interface, interface.threshold, interface.restart, false);
             notification.issue(interface.notificationpath, "Waiting for interface to become active", { "state": "normal" });
-          });
+          }
+        });
             
         app.on('serverevent', (e) => {
           if ((e.type) && (e.type == "SERVERSTATISTICS")) {
