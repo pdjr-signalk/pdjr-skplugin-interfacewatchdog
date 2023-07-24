@@ -32,8 +32,8 @@ The plugin configuration has the following properties.
 | interfaces       | []          | Required array of interface configuration objects. |
 
 Each object in the *interfaces* array has the following properties.
-Property         | Default     | Description |
 
+| Property         | Default     | Description |
 | :--------------- | :---------- | :---------- |
 | interface        | (none)      | Required name of the Signal K interface that should be monitored. |
 | threshold        | 0           | Optional integer data rate (in deltas per second) at or below which the plugin should act. |
