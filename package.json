@@ -1,6 +1,6 @@
 {
   "name": "pdjr-skplugin-interfacewatchdog",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Signal K interface activity watchdog",
   "main": "index.js",
   "signalk-plugin-enabled-by-default": true,
