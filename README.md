@@ -2,19 +2,6 @@
 
 Interface activity watchdog for Signal K.
 
-## Background
-
-I had a problem on my ship where a buggy N2K device was occasionally
-issuing a broken PGN which in-turn caused Signal K's CAN interface
-transceiver to lock-up.
-
-This plugin was designed to automatically restart Signal K when an
-interface lock-up was detected and so stop the problem becoming a major
-issue until the underlying bugs can be diagnosed and fixed.
-
-The bugs may now have been fixed, but I still run the plugin just in
-case...
-
 ## Description
 
 **pdjr-skplugin-interfacewatchdog** monitors the activity of one or
@@ -37,8 +24,11 @@ Each *interface* object has the following properties.
 | :--------------- | :---------- | :---------- |
 | interface        | (none)      | Required name of the Signal K interface that should be monitored. |
 | threshold        | 0           | Optional integer data rate (in deltas per second) at or below which the plugin should act. |
+| waitForActivity  | true        | Optional boolean saying whether or not the plugin should wait for activity on the specified interface before commencing monitoring. |
 | restart          | false       | Optional boolean saying whether or not the plugin should restart the Signal K host when throughput on *interface* drops below the specified *threshold*. |
-| notificationpath | (see below) | Optional path under `vessels.self.` on which the plugin should issue alarm notifications. |
+| notificationPath | (see below) | Optional path under `vessels.self.` on which the plugin should issue alarm notifications. |
+
+*waitForActivity* can be set to false to attempt to wake up a flakey interface that doesn't start properly, or set to true to wait for a, possibly slow, interface to become active before commencing monitoring. 
 
 If *notificationpath* is omitted, then the path "notifications.interfacewatchdog.*interface*" will be used.
 
