@@ -78,6 +78,8 @@ module.exports = function(app) {
 
   plugin.start = function(options) {
 
+    // Make plugin.options and fully populate from options and defaults
+    // before saving to the plugin configuration file.
     plugin.options = { interfaces: [] };
     if ((options.interfaces) && (Array.isArray(options.interfaces)) && (options.interfaces.length > 0)) {
       options.interfaces.forEach(interface => {
@@ -90,16 +92,18 @@ module.exports = function(app) {
         });
       });
     }
-    console.log(JSON.stringify(plugin.options));
     app.savePluginOptions(plugin.options, ()=>{});
     
     if (plugin.options.interfaces.length > 0) {
+
+      // Log what we are up to.
       if (plugin.options.interfaces.length == 1) {
         log.N("watching interface '%s' (wait = %s, threshold = %d, reboot = %s)", plugin.options.interfaces[0].interface, plugin.options.interfaces[0].waitForActivity, plugin.options.interfaces[0].threshold, plugin.options.interfaces[0].restart);
       } else {
         log.N("watching %d interfaces (see log for details)", plugin.options.interfaces.length);
       }
       
+      // Make some scratch values.
       plugin.options.interfaces.forEach(interface => {
         interface.hasBeenActive = 0;
         interface.alarmIssued = 0;
@@ -120,7 +124,8 @@ module.exports = function(app) {
                 interface.hasBeenActive = 1;
               }
                   
-              // If interface is active, then monitor throughput
+              // If we aren't wiating for activity or we are and the
+              // interface has been active, then monitor throughput
               if ((!interface.waitForActivity) || (interface.hasBeenActive == 1)) {
                 if (parseInt(throughput) <= interface.threshold) {
                   log.N("throughput on '%s' dropped below threshold", interface.interface, false);
