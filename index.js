@@ -34,19 +34,24 @@ const PLUGIN_SCHEMA = {
             "type": "string"
           },
           "threshold": {
-            "title": "Threshold",
+            "title": "Activity threshold in deltas per second",
             "type": "number",
             "default": 0
           },
           "waitForActivity": {
-            "title": "Wait for activity",
-            "type": "boolean",
-            "default": true
+            "title": "Wait this number of cycles for activity (0 says for ever)",
+            "type": "number",
+            "default": 0
           },
           "restart": {
             "title": "Restart",
             "type": "boolean",
             "default": false
+          },
+          "restartLimit": {
+            "title": "Give up restarting the server after this many consecutive restarts",
+            "type": "number",
+            "default": 3
           },
           "notificationPath": {
             "title": "Notification path",
@@ -61,8 +66,7 @@ const PLUGIN_SCHEMA = {
 };
 const PLUGIN_UISCHEMA = {};
 
-const INTERFACE_THRESHOLD_DEFAULT = 0;
-const INTERFACE_RESTART_DEFAULT = false;
+const INTERFACE_NOT_AVAILABLE_LOG_LIMIT = 3;
 
 module.exports = function(app) {
   var plugin = {};
@@ -88,7 +92,8 @@ module.exports = function(app) {
           threshold: interface.threshold || plugin.schema.properties.interfaces.items.properties.threshold.default,
           waitForActivity: (interface.waitForActivity !== undefined)?interface.waitForActivity:plugin.schema.properties.interfaces.items.properties.waitForActivity.default,
           restart: (interface.restart !== undefined)?interface.restart:plugin.schema.properties.interfaces.items.properties.restart.default,
-          notificationPath: interface.notificationPath || "notifications." + plugin.id + "." + interface.interface
+          restartLimit: (interface.restartLimit !== undefined)?interface.restartLimit:plugin.schema.properties.interfaces.items.properties.restartLimit.default,
+          notificationPath: interface.notificationPath || "notifications." + plugin.id + "." + interface.interface 
         });
       });
     }
@@ -103,30 +108,40 @@ module.exports = function(app) {
         log.N("watching %d interfaces (see log for details)", plugin.options.interfaces.length);
       }
       
-      // Make some scratch values.
+      // Make some scratch values and log/notify.
       plugin.options.interfaces.forEach(interface => {
         interface.hasBeenActive = 0;
         interface.alarmIssued = 0;
+        interface.notAvailableCount = 0;
+        interface.restarts = 0;
         if (plugin.options.interfaces.length > 1) log.N("watching interface '%s' (wait = %s, threshold = %d, reboot = %s)", interface.interface, interface.waitForActivity, interface.threshold, interface.restart, false);
         notification.issue(interface.notificationPath, "Waiting for interface to become active", { "state": "normal" });
       });
             
+      // Register as a serverevent recipient.
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
+          // Iterate over configured interfaces.
           plugin.options.interfaces.forEach(interface => {
+
             if ((e.data.providerStatistics[interface.interface]) && (e.data.providerStatistics[interface.interface])) {
+              if (interface.notAvailableCount > 0) {
+                log.N("provider statistics for interface '%s' are now available.", interface.interface, false);
+                interface.notAvailableCount = 0;
+              }
+
               var throughput = e.data.providerStatistics[interface.interface].deltaRate;
 
               // Check interface to make sure it has some activity
-              if ((interface.hasBeenActive == 0) && (throughput > 0.0)) {
-                log.N("interface '%s' is alive, watchdog active", interface.interface, false);
-                notification.issue(interface.notificationPath, "Interface is alive, watchdog is active", { "state": "normal" });
-                interface.hasBeenActive = 1;
+              if ((interface.hasBeenActive < 2) && (throughput > 0.0)) {
+                log.N("interface '%s' is alive", interface.interface, false);
+                notification.issue(interface.notificationPath, "Interface is alive", { "state": "normal" });
+                interface.hasBeenActive = (throughput < interface.threshold)?1:2;
               }
                   
-              // If we aren't wiating for activity or we are and the
+              // If we aren't waiting for activity or we are and the
               // interface has been active, then monitor throughput
-              if ((!interface.waitForActivity) || (interface.hasBeenActive == 1)) {
+              if ((interface.hasBeenActive === 2) || (interface.waitForActivity === 0)) {
                 if (parseInt(throughput) <= interface.threshold) {
                   log.N("throughput on '%s' dropped below threshold", interface.interface, false);
                   if (!interface.alarmIssued) {
@@ -134,22 +149,46 @@ module.exports = function(app) {
                     interface.alarmIssued = 1;
                   }
                   if (interface.restart) {
-                    log.N("restarting Signal K", false);
-                    setTimeout(() => { process.exit(0); }, 1000);
-                  } 
+                    interface.restarts = (interface.restarts)?(interface.restarts++):1;
+                    delete interface.hasBeenActive;
+                    delete interface.alarmIssued;
+                    delete interface.notAvailableCount;
+                    app.savePluginOptions(plugin.options);
+                    if ((interface.restarts) && (interface.restarts < interface.restartLimit)) {
+                      log.N("restarting Signal K", false);
+                      setTimeout(() => { process.exit(0); }, 1000);
+                    } else {
+                      log.N("refusing to restart interface '%s' because restart limit has been reached", interface.interface, false);
+                      log.N("correct the persistent problem with the interface and then delete the", false);
+                      log.N("'restarts' property in the plugin configuration file.", false);
+                    }
+                  }
                 } else {
                   notification.issue(interface.notificationPath, "Throughput on '" + interface.interface + "' above threshold", { "state": "normal" });
                   interface.alarmIssued = 0;
+                  if (interface.restarts) {
+                    delete interface.restarts;
+                    app.savePluginOptions(plugin.options);
+                  }
                 }
               }
+              interface.waitForActivity = (interface.waitForActivity > 0)?(interface.waitForActivity-1):0;
             } else {
-              app.debug("provider statistics for interface '%s' are not available", interface.interface);
+              interface.notAvailableCount++;
+              if (interface.notAvailableCount <= INTERFACE_NOT_AVAILABLE_LOG_LIMIT) {
+                log.N(
+                  "provider statistics for interface '%s' are not available%s.",
+                  interface.interface,
+                  (interface.notAvailableCount == INTERFACE_NOT_AVAILABLE_LOG_LIMIT)?" (subsequent errors will not be logged)":"",
+                  false
+                );
+              }
             }
           });
         }
       });
     } else {
-      log.W("no interfaces are defined");
+      log.W("stopped: no interfaces are defined");
     }
   }
 
