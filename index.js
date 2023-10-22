@@ -105,7 +105,7 @@ module.exports = function(app) {
 
             if ((e.data.providerStatistics[interface.interface]) && (e.data.providerStatistics[interface.interface])) {
               if (interface.notAvailableCount > 0) {
-                log.N("provider statistics for interface '%s' are now available.", interface.interface, false);
+                app.debug(`provider statistics for interface '${interface.interface}' are now available.`);
                 interface.notAvailableCount = 0;
               }
 
@@ -113,7 +113,7 @@ module.exports = function(app) {
 
               // Check interface to make sure it has some activity
               if ((interface.hasBeenActive < 2) && (throughput > 0.0)) {
-                log.N("interface '%s' is alive", interface.interface, false);
+                log.N(`interface '${interface.interface}' is alive`);
                 notification.issue(interface.notificationPath, "Interface is alive", { "state": "normal" });
                 interface.hasBeenActive = (throughput < interface.threshold)?1:2;
               }
