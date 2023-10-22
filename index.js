@@ -82,15 +82,11 @@ module.exports = function(app) {
     // Make plugin.options by merging defaults and options.
     plugin.options = {};
     plugin.options.interfaces = options.interfaces.map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...interface }));
-    app.debug("using congiguration: %s", JSON.stringify(plugin.options, null, 2));
+    app.debug(`using congiguration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     if (plugin.options.interfaces.length > 0) {
       // Log what we are up to.
-      if (plugin.options.interfaces.length == 1) {
-        log.N("watching interface '%s' (wait = %s, threshold = %d, reboot = %s)", plugin.options.interfaces[0].interface, plugin.options.interfaces[0].waitForActivity, plugin.options.interfaces[0].threshold, plugin.options.interfaces[0].restart);
-      } else {
-        log.N("watching %d interfaces (see log for details)", plugin.options.interfaces.length);
-      }
+      log.N(`watching interfaces ${JSON.stringify(plugins.options.interfaces.map(i => (i.interface)))}`);
       
       // Make some scratch values and log/notify.
       plugin.options.interfaces.forEach(interface => {
@@ -98,7 +94,6 @@ module.exports = function(app) {
         interface.alarmIssued = 0;
         interface.notAvailableCount = 0;
         interface.restarts = 0;
-        if (plugin.options.interfaces.length > 1) log.N("watching interface '%s' (wait = %s, threshold = %d, reboot = %s)", interface.interface, interface.waitForActivity, interface.threshold, interface.restart, false);
         notification.issue(interface.notificationPath, "Waiting for interface to become active", { "state": "normal" });
       });
             
