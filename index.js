@@ -35,30 +35,27 @@ const PLUGIN_SCHEMA = {
           },
           "threshold": {
             "title": "Activity threshold in deltas per second",
-            "type": "number",
-            "default": 0
+            "type": "number"
           },
           "waitForActivity": {
             "title": "Wait this number of cycles for activity (0 says for ever)",
-            "type": "number",
-            "default": 0
+            "type": "number"
           },
           "restart": {
             "title": "Restart",
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           "restartLimit": {
             "title": "Give up restarting the server after this many consecutive restarts",
-            "type": "number",
-            "default": 3
+            "type": "number"
           },
           "notificationPath": {
             "title": "Notification path",
             "type": "string"
           }
         },
-        "required": [ "interface" ]
+        "required": [ "interface" ],
+        "default": { "threshold": 0, "waitForActivity": 0, "restart": false, "restartLimit": 3 }
       }
     }
   },
@@ -82,25 +79,12 @@ module.exports = function(app) {
 
   plugin.start = function(options) {
 
-    // Make plugin.options and fully populate from options and defaults
-    // before saving to the plugin configuration file.
-    plugin.options = { interfaces: [] };
-    if ((options.interfaces) && (Array.isArray(options.interfaces)) && (options.interfaces.length > 0)) {
-      options.interfaces.forEach(interface => {
-        plugin.options.interfaces.push({
-          interface: interface.interface,
-          threshold: interface.threshold || plugin.schema.properties.interfaces.items.properties.threshold.default,
-          waitForActivity: (interface.waitForActivity !== undefined)?interface.waitForActivity:plugin.schema.properties.interfaces.items.properties.waitForActivity.default,
-          restart: (interface.restart !== undefined)?interface.restart:plugin.schema.properties.interfaces.items.properties.restart.default,
-          restartLimit: (interface.restartLimit !== undefined)?interface.restartLimit:plugin.schema.properties.interfaces.items.properties.restartLimit.default,
-          notificationPath: interface.notificationPath || "notifications." + plugin.id + "." + interface.interface 
-        });
-      });
-    }
-    app.savePluginOptions(plugin.options, ()=>{});
-    
-    if (plugin.options.interfaces.length > 0) {
+    // Make plugin.options by merging defaults and options.
+    plugin.options = {};
+    plugin.options.interfaces = options.interfaces.map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...interface }));
+    app.debug("using congiguration: %s", JSON.stringify(plugin.options, null, 2));
 
+    if (plugin.options.interfaces.length > 0) {
       // Log what we are up to.
       if (plugin.options.interfaces.length == 1) {
         log.N("watching interface '%s' (wait = %s, threshold = %d, reboot = %s)", plugin.options.interfaces[0].interface, plugin.options.interfaces[0].waitForActivity, plugin.options.interfaces[0].threshold, plugin.options.interfaces[0].restart);
