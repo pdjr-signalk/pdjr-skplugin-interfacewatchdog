@@ -14,8 +14,8 @@
  * permissions and limitations under the License.
  */
 
-const Log = require("./lib/signalk-liblog/Log.js");
-const Notification = require("./lib/signalk-libnotification/Notification.js");
+const myApp = require('./lib/signalk-libapp/App.js');
+const Log = require('./lib/signalk-liblog/Log.js');
 
 const PLUGIN_ID = "interfacewatchdog";
 const PLUGIN_NAME = "Interface activity watchdog";
@@ -29,8 +29,8 @@ const PLUGIN_SCHEMA = {
       "items": {
         "type": "object",
         "properties": {
-          "interface": {
-            "title": "Interface",
+          "name": {
+            "title": "Interface name",
             "type": "string"
           },
           "threshold": {
@@ -52,18 +52,45 @@ const PLUGIN_SCHEMA = {
           "notificationPath": {
             "title": "Notification path",
             "type": "string"
+          },
+          "scratch": {
+            "title": "Run-time scratchpad",
+            "type": "object",
+            "options": { "hidden": true },
+            "properties": {
+              "detectedActiveCount": {
+                "type": "number"
+              },
+              "sequentialNotActiveCount": {
+                "type": "number"
+              },
+              "alarmIssued": {
+                "type": "number"
+              },
+              "restartCount": {
+                "type": "number"
+              }
+            }
           }
         },
-        "required": [ "interface" ],
-        "default": { "threshold": 0, "waitForActivity": 0, "restart": false, "restartLimit": 3 }
+        "required": [ "name" ],
+        "default": { 
+          "threshold": 0,
+          "waitForActivity": 0,
+          "restart": false,
+          "restartLimit": 3,
+          "detectedActiveCount" : 0,
+          "sequentialLowActiveCount": 0,
+          "numberOfRestarts": 0,
+          "alarmIssued": 0,
+          "restartCount": 0
+        }
       }
     }
   },
   "required": [ "interfaces" ]
 };
 const PLUGIN_UISCHEMA = {};
-
-const INTERFACE_NOT_AVAILABLE_LOG_LIMIT = 3;
 
 module.exports = function(app) {
   var plugin = {};
@@ -74,100 +101,75 @@ module.exports = function(app) {
   plugin.schema = PLUGIN_SCHEMA;
   plugin.uiSchema = PLUGIN_UISCHEMA;
 
+  const App = new myApp(app);
   const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
-  const notification = new Notification(app, plugin.id, { "state": "alarm", "method": [ ] });
-
-  plugin.start = function(options) {
+  
+  plugin.start = function(options, restartCallback) {
 
     // Make plugin.options by merging defaults and options.
     plugin.options = {};
     plugin.options.interfaces = options.interfaces.map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...interface }));
     app.debug(`using congiguration: ${JSON.stringify(plugin.options, null, 2)}`);
-
+  
     if (plugin.options.interfaces.length > 0) {
-      // Log what we are up to.
-      log.N(`watching interfaces ${JSON.stringify(plugin.options.interfaces.map(i => (i.interface)))}`);
-      
-      // Make some scratch values and log/notify.
+      log.N(`watching interfaces ${JSON.stringify(plugin.options.interfaces.map(interface => (interface.name)))}`);
+        
       plugin.options.interfaces.forEach(interface => {
-        interface.hasBeenActive = 0;
-        interface.alarmIssued = 0;
-        interface.notAvailableCount = 0;
-        interface.restarts = 0;
-        notification.issue(interface.notificationPath, "Waiting for interface to become active", { "state": "normal" });
+        App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Waiting for interface to become active' }, plugin.id);
       });
             
       // Register as a serverevent recipient.
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
           // Iterate over configured interfaces.
-          plugin.options.interfaces.forEach(interface => {
+          for (var i = plugin.options.interfaces.length - 1; i >= 0; i--) {
+            const interface = plugin.options.interfaces[i]
+            const throughput = (e.data.providerStatistics[interface.name])?e.data.providerStatistics[interface.name].deltaRate:0;
 
-            if ((e.data.providerStatistics[interface.interface]) && (e.data.providerStatistics[interface.interface])) {
-              if (interface.notAvailableCount > 0) {
-                app.debug(`provider statistics for interface '${interface.interface}' are now available.`);
-                interface.notAvailableCount = 0;
+            if (throughput > 0) {
+              interface.activeCount++;
+              if (interface.activeCount == 1) {
+                app.debug(`interface '${interface.name}' is alive`);
+                App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
               }
-
-              var throughput = e.data.providerStatistics[interface.interface].deltaRate;
-
-              // Check interface to make sure it has some activity
-              if ((interface.hasBeenActive < 2) && (throughput > 0.0)) {
-                log.N(`interface '${interface.interface}' is alive`);
-                notification.issue(interface.notificationPath, "Interface is alive", { "state": "normal" });
-                interface.hasBeenActive = (throughput < interface.threshold)?1:2;
-              }
-                  
-              // If we aren't waiting for activity or we are and the
-              // interface has been active, then monitor throughput
-              if ((interface.hasBeenActive === 2) || (interface.waitForActivity === 0)) {
-                if (parseInt(throughput) <= interface.threshold) {
-                  log.N("throughput on '%s' dropped below threshold", interface.interface, false);
-                  if (!interface.alarmIssued) {
-                    notification.issue(interface.notificationPath, "Throughput on '" + interface.interface + "' dropped below threshold", { "state": "alarm" });
-                    interface.alarmIssued = 1;
-                  }
-                  if (interface.restart) {
-                    interface.restarts = (interface.restarts)?(interface.restarts++):1;
-                    delete interface.hasBeenActive;
-                    delete interface.alarmIssued;
-                    delete interface.notAvailableCount;
-                    app.savePluginOptions(plugin.options);
-                    if ((interface.restarts) && (interface.restarts < interface.restartLimit)) {
-                      log.N("restarting Signal K", false);
-                      setTimeout(() => { process.exit(0); }, 1000);
-                    } else {
-                      log.N("refusing to restart interface '%s' because restart limit has been reached", interface.interface, false);
-                      log.N("correct the persistent problem with the interface and then delete the", false);
-                      log.N("'restarts' property in the plugin configuration file.", false);
-                    }
-                  }
-                } else {
-                  notification.issue(interface.notificationPath, "Throughput on '" + interface.interface + "' above threshold", { "state": "normal" });
-                  interface.alarmIssued = 0;
-                  if (interface.restarts) {
-                    delete interface.restarts;
-                    app.savePluginOptions(plugin.options);
-                  }
-                }
-              }
-              interface.waitForActivity = (interface.waitForActivity > 0)?(interface.waitForActivity-1):0;
             } else {
-              interface.notAvailableCount++;
-              if (interface.notAvailableCount <= INTERFACE_NOT_AVAILABLE_LOG_LIMIT) {
-                log.N(
-                  "provider statistics for interface '%s' are not available%s.",
-                  interface.interface,
-                  (interface.notAvailableCount == INTERFACE_NOT_AVAILABLE_LOG_LIMIT)?" (subsequent errors will not be logged)":"",
-                  false
-                );
+              interface.inactiveCount++;
+            }
+
+            if (interface.activeCount == 0) {
+              if (interface.inactiveCount > interface.inactiveLimit) {
+              if (interface.restart) {
+                if (interface.restartCount < interface.restartLimit) {
+                  interface.restartCount++;
+                  app.debug(`interface '${interface.name}' is dead: restarting Signal K (attempt ${interface.restartCount} of ${interface.restartLimit})`);
+                  app.savePluginOptions(plugin.options);
+                  process.exit();
+                } else {
+                  interface.restartCount = 0;
+                  app.debug(`interface '${interface.name}' is dead: max restart attempts exceeded, so now ignoring`);
+                  app.savePluginOptions(plugin.options);
+                  plugin.options.interfaces.splice(i, 1);
+                }
+              } else {
+                app.debug(`interface '${interface.name}' is dead: restart not configured, so now ignoring`);
+                plugin.options.interfaces.splice(i, 1);
+              }  
+              }         
+            } else {
+              if (throughput < interface.threshold) {
+              if (interface.restart) {
+                app.debug(`interface '${interface.name}' throughput dropped below threshold: restarting`);
+                process.exit();
+              } else {
+                app.debug(`interface '${interface.name}' throughput dropped below threshold`);
+              }
               }
             }
-          });
+          }
         }
-      });
+      })
     } else {
-      log.W("stopped: no interfaces are defined");
+      log.W('stopped: no interfaces are configured')
     }
   }
 
