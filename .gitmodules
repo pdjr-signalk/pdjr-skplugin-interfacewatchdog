@@ -4,3 +4,6 @@
 [submodule "lib/signalk-libnotification"]
 	path = lib/signalk-libnotification
 	url = https://github.com/pdjr-signalk/signalk-libnotification
+[submodule "lib/signalk-libapp"]
+	path = lib/signalk-libapp
+	url = https://github.com/pdjr-signalk/signalk-libapp
