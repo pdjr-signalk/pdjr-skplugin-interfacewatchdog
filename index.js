@@ -86,7 +86,7 @@ module.exports = function(app) {
 
     if (plugin.options.interfaces.length > 0) {
       // Log what we are up to.
-      log.N(`watching interfaces ${JSON.stringify(plugins.options.interfaces.map(i => (i.interface)))}`);
+      log.N(`watching interfaces ${JSON.stringify(plugin.options.interfaces.map(i => (i.interface)))}`);
       
       // Make some scratch values and log/notify.
       plugin.options.interfaces.forEach(interface => {
