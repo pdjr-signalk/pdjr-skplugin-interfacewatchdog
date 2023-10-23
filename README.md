@@ -76,34 +76,41 @@ throughput.
 Typically, Signal K generates SERVERINFO events every four or five
 seconds.
 
-An interface becomes liable for processing by the plugin if its
-*waitForActivity* configuration property is non-zero.
+An interface will be monitored by the plugin if its *waitForActivity*
+configuration property has a non-zero value.
 
-If, after *waitForActivity* SERVERINFO events have occurred, an
-interface's throughput statistic is less than or equal to its
-configured *threshold* then a log message and an 'alarm'
-notification are issued and, if *restartLimit* is non-zero, then
-a restart-cycle is started (see below).
-If *restartLimit* is zero, or when any restart cycle has completed
-without interface throughput moving above *threshold*, the monitoring
-of the interface is disabled.
+If at any time throughput on a monitored interface falls below and
+remains below the configured *threshold* value for *waitForActivity*
+heartbeats then the interface is considered to be in a problem state.
 
-has not been exceeded
-then the Signal K node service will be killed.
-Any restart kill signal is issued approximately one second after the
-associated alarm notification: this delay is designed to allow an alarm
-handler or annunciator to detect the alarm condition and do its thing.
+If an interface's *rebootLimit* is configured to zero and the interface
+enters a problem state then a 'warn' notification is issued on the
+interface's *notificationPath* and the interface removed from further
+monitoring.
 
-If the reported interface throughput is above the specified threshold
-then a 'normal' notification is issued on the specified notification
-path.
+If, however, *rebootLimit* is non-zero then the Signal K server will be
+restarted up to a maximum of *rebootLimit* times in an attempt to
+restore the interface to a working state.
+After each restart, the interface is monitored for *waitForActivity*
+cycles in the hope that it wakes up.
+A second or two before a reboot sequence commences, an 'alert'
+notification is issued on *notificationPath*: this advance warning
+aims to allow an alarm handler or annunciator to detect the 'alert'
+condition and do its thing.
+
+If this rather crude remedial strategy fails to restore interface
+throughput above *threshold*, then a 'warn' notification is issued
+and the interface removed from further monitoring.
+
+If throughput on a problem interface recovers above *threshold* then
+a 'normal' notification is issued and monitoring proceeds as usual.
   
 If and when the Signal K Node process is killed it will only restart
 automatically if, as is normally the case, Signal K is started by the
 host operating system's process manager and it is configured to support
 this behaviour.
 
-Actions taken by the plugin are written to the server log.
+Significant actions taken by the plugin are written to the server log.
 
 ## Author
 
