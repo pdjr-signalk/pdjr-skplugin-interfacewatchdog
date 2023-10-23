@@ -41,7 +41,7 @@ which configures watchdog behaviour for a single Signal K interface.
     Defaults to 0 which will only identify interfaces that are completely
     dead.
   <dd>
-  <dt>Wait this number of cycles for activity <code>waitForActivity</code></dt>dt>
+  <dt>Wait this number of cycles for activity <code>waitForActivity</code></dt>
   <dd>
     Optional number of server status reporting cycles to wait for activity
     on the interface to rise above <em>threshold</em> before raising an
