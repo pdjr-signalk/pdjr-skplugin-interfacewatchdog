@@ -42,12 +42,8 @@ const PLUGIN_SCHEMA = {
             "title": "Wait this number of cycles for activity",
             "type": "number"
           },
-          "restart": {
-            "title": "Restart",
-            "type": "boolean"
-          },
           "restartLimit": {
-            "title": "Maximum allowed number of restart attempts",
+            "title": "Maximum number of restart attempts",
             "type": "number"
           },
           "notificationPath": {
@@ -142,7 +138,7 @@ module.exports = function(app) {
             if (throughput < interface.threshold) {
               if (interface.scratchpad.inactiveCount == interface.waitForActivity) {
                 // We've waited long enough: either enter reboot cycle or disable
-                if ((interface.restart) && (interface.scratchpad.restartCount < interface.restartLimit)) {
+                if ((interface.restartLimit != 0) && (interface.scratchpad.restartCount < interface.restartLimit)) {
                   log.W(`interface '${interface.name}' ${(interface.activeCount)?' throughput is below threshold':'has not started'}: restarting system (attempt ${++interface.scratchpad.restartCount} of ${interface.restartLimit})`);
                   interface.scratchpad.inactiveCount = 0;
                   if ((interface.scratchpad.restartCount == 1) && (interface.scratchpad.notified == 1)) {
