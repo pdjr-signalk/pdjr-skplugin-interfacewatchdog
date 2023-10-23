@@ -105,11 +105,11 @@ module.exports = function(app) {
 
     // Make plugin.options by merging defaults and options.
     plugin.options = {};
-    plugin.options.interfaces = options.interfaces.map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...interface }));
+    plugin.options.interfaces = options.interfaces.map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ notificationPath: `notifications.plugin.${plugin.id}.interfaces.${interface.name}` },  ...interface }));
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
-    // Drop disabled interfaces (i.e. where threshold == 0)
-    plugin.options.interfaces = plugin.options.interfaces.filter(interface => (interface.threshold));
+    // Drop disabled interfaces (i.e. where waitForActivity == 0)
+    plugin.options.interfaces = plugin.options.interfaces.filter(interface => (interface.waitForActivity != 0));
   
     // Report activity to dashboard and notification path
     if (plugin.options.interfaces.length > 0) {

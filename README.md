@@ -29,8 +29,10 @@ which configures watchdog behaviour for a single Signal K interface.
 <dl>
   <dt>Interface name <code>name</code></dt>
   <dd>
-    Required string property specifying the name of the Signal K
-    interface that should be monitored.
+    Required string property specifying the Signal K interface that
+    should be monitored.
+    This must match one of the ID's displayed in the Signal K dashboard
+    under <em>Server -> Data Connections</em>.
   </dd>
   <dt>Activity threshold in deltas/s <code>threshold</code></dt>
   <dd>
@@ -43,33 +45,28 @@ which configures watchdog behaviour for a single Signal K interface.
   <dd>
     Optional number of server status reporting cycles to wait for activity
     on the interface to rise above <em>threshold</em> before raising an
-    exception (0 says wait indefinitely).
-    Defaults to 3 whick equates to about 10 - 15 seconds.
-  </dd>
-  <dt>Restart <code>restart</code></dt>
-  <dd>
-    Optional boolen specifying whether or not to execute the restart protocol
-    when an exception is raised.
-    Defaults to false.
-    <p>
-    The restart protocol consists of one or more server restarts with
-    the aim of awakening a reluctant interface.
-    </p>
+    exception (0 says wait indefinitely and so disables watchdog function
+    on this interface.).
+    Defaults to 3 which equates to about 10 - 15 seconds.
   </dd>
   <dt>Maximum number of restart attempts <code>restartLimit</code></dt>
   <dd>
     Optional number of allowed consecutive server restarts because of
     exceptions on this interface.
     Defaults to 3.
+    A value of 0 disables any attempts to wake-up this interface by
+    re-starting Signal K: in this case, if the interface is still dead
+    after <em>waitForActivity</em> reporting cycles, then monitoring of
+    the interface will be disabled.
   </dd>
   <dt>Notification path <code>notificationPath</code></dt>
   <dd>
-    Optional path under `vessels.self.` on which the plugin should issue
-    status notifications. If omitted, then the path "notifications.interfacewatchdog.*interface*" will be used.
+    Optional path under 'vessels.self.' on which the plugin should issue
+    status notifications.
+    If omitted, then the path 'notifications.plugins.interfacewatchdog.<em>interface</em>'
+    will be used.
   </dd>
-| notificationPath |             |  |
-
-If *notificationpath* is omitted, then the path "notifications.interfacewatchdog.*interface*" will be used.
+</dl>
 
 ## Operation
 
