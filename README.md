@@ -8,22 +8,23 @@ Interface activity watchdog for Signal K.
 more specified Signal K interfaces, triggering an exception when
 throughput on an interface falls outside some specified parameters.
 
-Each interface can be monitored for a failure to start producing data
-as well as for the circumstance where its data throughput falls below a
-certain threshold.
+Each interface is monitored for a failure to start producing data as
+well as for the circumstance where its data throughput falls below a
+certain threshold,
 This allows detection of interfaces which fail to operate on start-up
 as well as interface failures during normal operation.
 
 When the plugin detects an issue with an interface it responds by
 writing a message to the server log, issuing a notification, and,
 optionally, restarting the host Signal K server.
-The maximum number of allowed consecutive server restarts can be
-limited to prevent a persistent loss of service resulting from
-multiple reboots.
+If server restarting is configured, the maximum number of allowed
+restarts can be limited to prevent a persistent loss of service
+resulting from multiple reboots.
 
 ## Configuration
 
-The plugin configuration has the following properties.
+The plugin configuration consists of one or more interface
+has the following properties.
 
 | Property         | Default     | Description |
 | :--------------- | :---------- | :---------- |

@@ -27,6 +27,7 @@ const PLUGIN_SCHEMA = {
     "interfaces": {
       "type": "array",
       "items": {
+        "title": "Interface",
         "type": "object",
         "properties": {
           "name": {
@@ -34,11 +35,11 @@ const PLUGIN_SCHEMA = {
             "type": "string"
           },
           "threshold": {
-            "title": "Activity threshold in deltas per second",
+            "title": "Activity threshold in deltas/s",
             "type": "number"
           },
           "waitForActivity": {
-            "title": "Wait this number of cycles for activity (0 says for ever)",
+            "title": "Wait this number of cycles for activity",
             "type": "number"
           },
           "restart": {
@@ -46,28 +47,28 @@ const PLUGIN_SCHEMA = {
             "type": "boolean"
           },
           "restartLimit": {
-            "title": "Give up restarting the server after this many consecutive restarts",
+            "title": "Maximum allowed number of restart attempts",
             "type": "number"
           },
           "notificationPath": {
             "title": "Notification path",
             "type": "string"
           },
-          "scratch": {
+          "scratchpad": {
             "title": "Run-time scratchpad",
             "type": "object",
             "options": { "hidden": true },
             "properties": {
-              "detectedActiveCount": {
+              "activeCount": {
                 "type": "number"
               },
-              "sequentialNotActiveCount": {
-                "type": "number"
-              },
-              "alarmIssued": {
+              "inactiveCount": {
                 "type": "number"
               },
               "restartCount": {
+                "type": "number"
+              },
+              "notified": {
                 "type": "number"
               }
             }
@@ -79,11 +80,12 @@ const PLUGIN_SCHEMA = {
           "waitForActivity": 0,
           "restart": false,
           "restartLimit": 3,
-          "detectedActiveCount" : 0,
-          "sequentialLowActiveCount": 0,
-          "numberOfRestarts": 0,
-          "alarmIssued": 0,
-          "restartCount": 0
+          "scratchpad": {
+            "activeCount" : 0,
+            "inactiveCount": 0,
+            "restartCount": 0,
+            "notified": 0
+          }
         }
       }
     }
@@ -109,7 +111,7 @@ module.exports = function(app) {
     // Make plugin.options by merging defaults and options.
     plugin.options = {};
     plugin.options.interfaces = options.interfaces.map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...interface }));
-    app.debug(`using congiguration: ${JSON.stringify(plugin.options, null, 2)}`);
+    app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
   
     if (plugin.options.interfaces.length > 0) {
       log.N(`watching interfaces ${JSON.stringify(plugin.options.interfaces.map(interface => (interface.name)))}`);
@@ -125,44 +127,43 @@ module.exports = function(app) {
           for (var i = plugin.options.interfaces.length - 1; i >= 0; i--) {
             const interface = plugin.options.interfaces[i]
             const throughput = (e.data.providerStatistics[interface.name])?e.data.providerStatistics[interface.name].deltaRate:0;
-
+            app.debug(`interface '${interface.name}' reports ${throughput} deltas/s throughput`);
             if (throughput > 0) {
-              interface.activeCount++;
-              if (interface.activeCount == 1) {
+              interface.scratchpad.activeCount++;
+              if (interface.scratchpad.activeCount == 1) {
                 app.debug(`interface '${interface.name}' is alive`);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
               }
             } else {
-              interface.inactiveCount++;
+              interface.scratchpad.inactiveCount++;
             }
 
-            if (interface.activeCount == 0) {
-              if (interface.inactiveCount > interface.inactiveLimit) {
-              if (interface.restart) {
-                if (interface.restartCount < interface.restartLimit) {
-                  interface.restartCount++;
-                  app.debug(`interface '${interface.name}' is dead: restarting Signal K (attempt ${interface.restartCount} of ${interface.restartLimit})`);
-                  app.savePluginOptions(plugin.options);
-                  process.exit();
+            if (throughput < interface.threshold) {
+              // Interface has never been active
+              if (interface.scratchpad.inactiveCount == interface.waitForActivity) {
+                // We've waited long enough: either enter reboot cycle or disable
+                if ((interface.restart) && (interface.scratchpad.restartCount < interface.restartLimit)) {
+                  log.W(`interface '${interface.name}' ${(interface.activeCount)?' throughput is below threshold':'has not started'}: restarting system (attempt ${++interface.scratchpad.restartCount} of ${interface.restartLimit})`);
+                  interface.scratchpad.inactiveCount = 0;
+                  if ((interface.scratchpad.restartCount == 1) && (interface.scratchpad.notified == 0)) {
+                    App.notify(interface.notificationPath, { state: 'alert', method: [], message: 'Reboot recovery process started' }, plugin.id);
+                    interface.scratchpad.notified = 1;
+                  }
+                  app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
+                  setTimeout(() => { process.exit(); }, 1000);
                 } else {
-                  interface.restartCount = 0;
-                  app.debug(`interface '${interface.name}' is dead: max restart attempts exceeded, so now ignoring`);
-                  app.savePluginOptions(plugin.options);
+                  log.W(`interface '${interface.name}' ${(interface.activeCount)?'has persistent low throughput':'has not started'} and will now be ignored`);
+                  App.notify(interface.notificationPath, { state: 'warn', method: [], message: 'Monitoring disabled (interface is dead)' }, plugin.id);
+                  interface.scratchpad.notified = interface.scratchpad.restartCount = interface.scratchpad.inactiveCount = 0;
+                  app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
                   plugin.options.interfaces.splice(i, 1);
                 }
-              } else {
-                app.debug(`interface '${interface.name}' is dead: restart not configured, so now ignoring`);
-                plugin.options.interfaces.splice(i, 1);
-              }  
               }         
             } else {
-              if (throughput < interface.threshold) {
-              if (interface.restart) {
-                app.debug(`interface '${interface.name}' throughput dropped below threshold: restarting`);
-                process.exit();
-              } else {
-                app.debug(`interface '${interface.name}' throughput dropped below threshold`);
-              }
+              if (interface.scratchpad.notified == 1) {
+                App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Throughput above threshold' }, plugin.id);
+                interface.scratchpad.notified = 0;
+                app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
               }
             }
           }
