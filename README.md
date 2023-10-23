@@ -16,30 +16,58 @@ as well as interface failures during normal operation.
 
 When the plugin detects an issue with an interface it responds by
 writing a message to the server log, issuing a notification, and,
-optionally, restarting the host Signal K server.
+either disabling monitoring or restarting the host Signal K server.
 If server restarting is configured, the maximum number of allowed
 restarts can be limited to prevent a persistent loss of service
-resulting from multiple reboots.
+resulting from runaway reboots.
 
 ## Configuration
 
-The plugin configuration consists of one or more interface
-has the following properties.
+The plugin configuration consists of 'Interface' objects, each of
+which configures watchdog behaviour for a single Signal K interface.
 
-| Property         | Default     | Description |
-| :--------------- | :---------- | :---------- |
-| interfaces       | []          | Required array of *interface* objects. |
-
-Each *interface* object has the following properties.
-
-| Property         | Default     | Description |
-| :--------------- | :---------- | :---------- |
-| interface        | (none)      | Required name of the Signal K interface that should be monitored. |
-| threshold        | 0           | Optional integer data rate (in deltas per second) at or below which an exception should be raised. |
-| waitForActivity  | 2           | Optional number of server event cycles to wait for activity to rise above *threshold* before raising an exception (0 says wait indefinitely). |
-| restart          | false       | Optional boolean saying whether or not the plugin should restart the Signal K host when an exception is raised. |
-| restartLimit     | 3           | Optional number of allowed consecutive server restarts. |
-| notificationPath |             | Optional path under `vessels.self.` on which the plugin should issue alarm notifications. If omitted, then the path "notifications.interfacewatchdog.*interface*" will be used. |
+<dl>
+  <dt>Interface name <code>name</code></dt>
+  <dd>
+    Required string property specifying the name of the Signal K
+    interface that should be monitored.
+  </dd>
+  <dt>Activity threshold in deltas/s <code>threshold</code></dt>
+  <dd>
+    Optional integer data rate (in deltas per second) at or below which
+    an exception should be raised.
+    Defaults to 0 which will only identify interfaces that are completely
+    dead.
+  <dd>
+  <dt>Wait this number of cycles for activity <code>waitForActivity</code></dt>dt>
+  <dd>
+    Optional number of server status reporting cycles to wait for activity
+    on the interface to rise above <em>threshold</em> before raising an
+    exception (0 says wait indefinitely).
+    Defaults to 3 whick equates to about 10 - 15 seconds.
+  </dd>
+  <dt>Restart <code>restart</code></dt>
+  <dd>
+    Optional boolen specifying whether or not to execute the restart protocol
+    when an exception is raised.
+    Defaults to false.
+    <p>
+    The restart protocol consists of one or more server restarts with
+    the aim of awakening a reluctant interface.
+    </p>
+  </dd>
+  <dt>Maximum number of restart attempts <code>restartLimit</code></dt>
+  <dd>
+    Optional number of allowed consecutive server restarts because of
+    exceptions on this interface.
+    Defaults to 3.
+  </dd>
+  <dt>Notification path <code>notificationPath</code></dt>
+  <dd>
+    Optional path under `vessels.self.` on which the plugin should issue
+    status notifications. If omitted, then the path "notifications.interfacewatchdog.*interface*" will be used.
+  </dd>
+| notificationPath |             |  |
 
 If *notificationpath* is omitted, then the path "notifications.interfacewatchdog.*interface*" will be used.
 
