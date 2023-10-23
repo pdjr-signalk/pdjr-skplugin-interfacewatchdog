@@ -70,19 +70,20 @@ which configures watchdog behaviour for a single Signal K interface.
 
 ## Operation
 
-The plugin uses the Signal K SERVERINFO server event mechanism as its
-basic processing heartbeat and its source of information on interface
+The plugin uses the Signal K SERVERINFO event mechanism as its basic
+processing heartbeat and its source of information on interface
 throughput.
 Typically, Signal K generates SERVERINFO events every four or five
 seconds.
 
-An interface becomes liable for processing by the plugin when either
-its reported activity exceeds *threshold* or any deferral period set
-by *waitForActivity* has expired.
+An interface becomes liable for processing by the plugin if its
+*waitForActivity* configuration property is non-zero.
 
-If *interface*'s throughput statistic is less than or equal to
-*threshold* then a log message and an 'alarm' notification are issued
-and, if *restart* is enabled and *restartLimit* has not been exceeded
+If, after *waitForActivity* SERVERINFO events have occurred, an
+interface's throughput statistic is less than or equal to its
+configured *threshold* then a log message and an 'alarm'
+notification are issued and, if *restartLimit* is non-zero, then
+a restart-cycle is started.has not been exceeded
 then the Signal K node service will be killed.
 Any restart kill signal is issued approximately one second after the
 associated alarm notification: this delay is designed to allow an alarm
