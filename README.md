@@ -83,7 +83,12 @@ If, after *waitForActivity* SERVERINFO events have occurred, an
 interface's throughput statistic is less than or equal to its
 configured *threshold* then a log message and an 'alarm'
 notification are issued and, if *restartLimit* is non-zero, then
-a restart-cycle is started.has not been exceeded
+a restart-cycle is started (see below).
+If *restartLimit* is zero, or when any restart cycle has completed
+without interface throughput moving above *threshold*, the monitoring
+of the interface is disabled.
+
+has not been exceeded
 then the Signal K node service will be killed.
 Any restart kill signal is issued approximately one second after the
 associated alarm notification: this delay is designed to allow an alarm
