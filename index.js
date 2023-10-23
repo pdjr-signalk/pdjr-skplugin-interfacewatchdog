@@ -130,7 +130,8 @@ module.exports = function(app) {
             app.debug(`interface '${interface.name}' reports ${throughput} deltas/s throughput`);
             if (throughput > 0) {
               interface.scratchpad.activeCount++;
-              if (interface.scratchpad.activeCount == 1) {
+              if (interface.scratchpad.notified == 0) {
+                interface.scratchpad.notified = 1
                 log.N(`interface '${interface.name}' is alive`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
               }
@@ -144,9 +145,9 @@ module.exports = function(app) {
                 if ((interface.restart) && (interface.scratchpad.restartCount < interface.restartLimit)) {
                   log.W(`interface '${interface.name}' ${(interface.activeCount)?' throughput is below threshold':'has not started'}: restarting system (attempt ${++interface.scratchpad.restartCount} of ${interface.restartLimit})`);
                   interface.scratchpad.inactiveCount = 0;
-                  if ((interface.scratchpad.restartCount == 1) && (interface.scratchpad.notified == 0)) {
+                  if ((interface.scratchpad.restartCount == 1) && (interface.scratchpad.notified == 1)) {
                     App.notify(interface.notificationPath, { state: 'alert', method: [], message: 'Reboot recovery process started' }, plugin.id);
-                    interface.scratchpad.notified = 1;
+                    interface.scratchpad.notified = 2;
                   }
                   app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
                   setTimeout(() => { process.exit(); }, 1000);
@@ -159,9 +160,9 @@ module.exports = function(app) {
                 }
               }         
             } else {
-              if (interface.scratchpad.notified == 1) {
+              if (interface.scratchpad.notified == 2) {
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Throughput above threshold' }, plugin.id);
-                interface.scratchpad.notified = 0;
+                interface.scratchpad.notified = 1;
                 app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
               }
             }
@@ -174,6 +175,8 @@ module.exports = function(app) {
   }
 
   plugin.stop = function() {
+    interface.scratchpad.notified = 0;
+    app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
   }
 
   return(plugin);
