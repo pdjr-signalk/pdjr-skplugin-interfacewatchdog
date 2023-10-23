@@ -73,8 +73,7 @@ const PLUGIN_SCHEMA = {
         "required": [ "name" ],
         "default": { 
           "threshold": 0,
-          "waitForActivity": 0,
-          "restart": false,
+          "waitForActivity": 2,
           "restartLimit": 3,
           "scratchpad": {
             "activeCount" : 0,
