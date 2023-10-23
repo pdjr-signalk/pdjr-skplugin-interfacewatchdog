@@ -114,7 +114,7 @@ module.exports = function(app) {
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
   
     if (plugin.options.interfaces.length > 0) {
-      log.N(`watching interfaces ${JSON.stringify(plugin.options.interfaces.map(interface => (interface.name)))}`);
+      log.N(`watching interfaces ${plugin.options.interfaces.map(interface => (interface.name  + (interface.reboot)?'(R)':'')).join(', ')}`);
         
       plugin.options.interfaces.forEach(interface => {
         App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Waiting for interface to become active' }, plugin.id);
