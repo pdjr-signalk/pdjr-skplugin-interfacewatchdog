@@ -131,7 +131,7 @@ module.exports = function(app) {
             if (throughput > 0) {
               interface.scratchpad.activeCount++;
               if (interface.scratchpad.activeCount == 1) {
-                app.debug(`interface '${interface.name}' is alive`);
+                log.N(`interface '${interface.name}' is alive`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
               }
             } else {
@@ -139,7 +139,6 @@ module.exports = function(app) {
             }
 
             if (throughput < interface.threshold) {
-              // Interface has never been active
               if (interface.scratchpad.inactiveCount == interface.waitForActivity) {
                 // We've waited long enough: either enter reboot cycle or disable
                 if ((interface.restart) && (interface.scratchpad.restartCount < interface.restartLimit)) {
