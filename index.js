@@ -107,7 +107,11 @@ module.exports = function(app) {
     plugin.options = {};
     plugin.options.interfaces = options.interfaces.map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...interface }));
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
+
+    // Drop disabled interfaces (i.e. where threshold == 0)
+    plugin.options.interfaces = plugin.options.interfaces.filter(interface => (interface.threshold));
   
+    // Report activity to dashboard and notification path
     if (plugin.options.interfaces.length > 0) {
       log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${plugin.options.interfaces.map(interface => (interface.name  + ((interface.restart)?'('+ ((interface.scratchpad.restartCount > 0)?'R':'r') + ')':''))).join(', ')}`);
         
