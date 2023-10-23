@@ -106,7 +106,7 @@ module.exports = function(app) {
   const App = new myApp(app);
   const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
   
-  plugin.start = function(options, restartCallback) {
+  plugin.start = function(options) {
 
     // Make plugin.options by merging defaults and options.
     plugin.options = {};
