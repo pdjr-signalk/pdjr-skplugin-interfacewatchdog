@@ -31,6 +31,10 @@ const PLUGIN_SCHEMA = {
         "type": "object",
         "properties": {
           "name": {
+            "title": "Watchdog name",
+            "type": "string"
+          },
+          "interface": {
             "title": "Interface name",
             "type": "string"
           },
@@ -70,7 +74,7 @@ const PLUGIN_SCHEMA = {
             }
           }
         },
-        "required": [ "name" ],
+        "required": [ "interface" ],
         "default": { 
           "threshold": 0,
           "waitForActivity": 2,
@@ -105,7 +109,7 @@ module.exports = function(app) {
 
     // Make plugin.options by merging defaults and options.
     plugin.options = {};
-    plugin.options.interfaces = options.interfaces.map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ notificationPath: `notifications.plugin.${plugin.id}.interfaces.${interface.name}` },  ...interface }));
+    plugin.options.interfaces = options.interfaces.map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ name: interface.interface, notificationPath: `notifications.plugin.${plugin.id}.interfaces.${interface.name}` },  ...interface }));
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     // Drop disabled interfaces (i.e. where waitForActivity == 0)
@@ -125,7 +129,7 @@ module.exports = function(app) {
           // Iterate over configured interfaces.
           for (var i = plugin.options.interfaces.length - 1; i >= 0; i--) {
             const interface = plugin.options.interfaces[i]
-            const throughput = (e.data.providerStatistics[interface.name])?e.data.providerStatistics[interface.name].deltaRate:0;
+            const throughput = (e.data.providerStatistics[interface.interface])?e.data.providerStatistics[interface.interface].deltaRate:0;
             app.debug(`interface '${interface.name}' reports ${throughput} deltas/s throughput`);
             if (throughput > 0) {
               interface.scratchpad.activeCount++;

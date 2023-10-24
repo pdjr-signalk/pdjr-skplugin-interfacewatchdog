@@ -27,7 +27,14 @@ The plugin configuration consists of 'Interface' objects, each of
 which configures watchdog behaviour for a single Signal K interface.
 
 <dl>
-  <dt>Interface name <code>name</code></dt>
+  <dt>Watchdog name <code>name</code></dt>
+  <dd>
+    Optional string property giving a name that will be used in log and
+    notification messages to identify this watchdog.; this can be useful
+    if you want granular reporting on interface behaviour.
+    Defaults to <code>interface</code>.
+  </dd>
+  <dt>Interface name <code>interface</code></dt>
   <dd>
     Required string property specifying the Signal K interface that
     should be monitored.
