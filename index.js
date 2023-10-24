@@ -160,7 +160,8 @@ module.exports = function(app) {
               }         
             } else {
               if (interface.scratchpad.notified == 2) {
-                App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Throughput above threshold' }, plugin.id);
+                App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface throughput is normal' }, plugin.id);
+                interface.scratchpad.activeCount = interface.scratchpad.inactiveCount = interface.scratchpad.restartCount = 0;
                 interface.scratchpad.notified = 1;
                 app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
               }
