@@ -130,11 +130,11 @@ module.exports = function(app) {
       
       // Get a persistent storage
       plugin.scratchFile = require('path').join( app.getDataDirPath(), plugin.id + '.json');
-      plugin.scratchData = JSON.stringify(fs.getFileSync(plugin.scratchFile) || '{}');
+      plugin.scratchData = JSON.stringify(fs.readFileSync(plugin.scratchFile) || '{}');
 
       console.log(plugin.scratchFile);
       console.log(plugin.scratchData);
-      
+
       // Register as a serverevent recipient.
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
