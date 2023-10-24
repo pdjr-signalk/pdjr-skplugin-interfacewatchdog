@@ -130,7 +130,7 @@ module.exports = function(app) {
           const interfaceThroughputs =
             Object.keys(e.data.providerStatistics)
             .filter(key => plugin.options.interfaces.map(interface => interface.interface).includes(key))
-            .reduce((a,key) => { a[key] = e.data.providerStatistics[key].deltaRate }, {});
+            .reduce((a,key) => { a[key] = e.data.providerStatistics[key].deltaRate; return(a); }, {});
           app.debug(`interface throughputs: ${JSON.stringify(interfaceThroughputs)}`)
 
           // Iterate over configured interfaces.
