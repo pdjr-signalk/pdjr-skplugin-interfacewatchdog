@@ -52,41 +52,21 @@ const PLUGIN_SCHEMA = {
             "title": "Maximum number of restart attempts",
             "type": "number"
           },
+          "stopWatching": {
+            "title": "Stop watching if reboot fails or is disabled",
+            "type": "boolean"
+          },
           "notificationPath": {
             "title": "Notification path",
             "type": "string"
           },
-          "scratchpad": {
-            "title": "Run-time scratchpad",
-            "type": "object",
-            "options": { "hidden": true },
-            "properties": {
-              "activeCount": {
-                "type": "number"
-              },
-              "inactiveCount": {
-                "type": "number"
-              },
-              "restartCount": {
-                "type": "number"
-              },
-              "notified": {
-                "type": "number"
-              }
-            }
-          }
         },
         "required": [ "interface" ],
         "default": { 
           "threshold": 0,
           "waitForActivity": 2,
           "restartLimit": 3,
-          "scratchpad": {
-            "activeCount" : 0,
-            "inactiveCount": 0,
-            "restartCount": 0,
-            "notified": 0
-          }
+          "stopWatching": true
         }
       }
     }
@@ -179,11 +159,13 @@ module.exports = function(app) {
                     setTimeout(() => { process.exit(); }, 1000);
                   }
                 } else {
-                  log.W(`interface '${interface.name}' ${(interface.activeCount)?'has persistent low throughput':'has not started'} and will now be ignored`, false);
-                  App.notify(interface.notificationPath, { state: 'warn', method: [], message: 'Monitoring disabled (interface is dead)' }, plugin.id);
-                  plugin.scratchData.notified = plugin.scratchData.restartCount = plugin.scratchData.activeCount = plugin.scratchData.inactiveCount = 0;
-                  fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
-                  plugin.options.interfaces.splice(i, 1);
+                  if (plugin.options.stopWatching) {
+                    log.W(`interface '${interface.name}' ${(interface.activeCount)?'has persistent low throughput':'has not started'} stopping watching`, false);
+                    App.notify(interface.notificationPath, { state: 'warn', method: [], message: 'Interface is dead)' }, plugin.id);
+                    plugin.scratchData.restartCount = 0;
+                    fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
+                    plugin.options.interfaces.splice(i, 1);
+                  }
                 }
               }         
             } else {
