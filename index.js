@@ -131,8 +131,9 @@ module.exports = function(app) {
 
           // Iterate over configured interfaces.
           for (var i = plugin.options.interfaces.length - 1; i >= 0; i--) {
-            const interface = plugin.options.interfaces[i]
-            const throughput = (interfaceThroughputs[interface.interface])?interfaceThroughputs[interface.interface]:0;
+            var interface = plugin.options.interfaces[i]
+            var throughput = (interfaceThroughputs[interface.interface])?interfaceThroughputs[interface.interface]:0;
+            console.log(">>>>> %s", throughput);
 
             if (throughput > 0) { plugin.scratchData.activeCount++; } else { plugin.scratchData.inactiveCount++; }
 
