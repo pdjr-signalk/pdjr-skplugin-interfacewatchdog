@@ -130,7 +130,7 @@ module.exports = function(app) {
       
       // Get a persistent storage
       plugin.scratchFile = require('path').join( app.getDataDirPath(), plugin.id + '.json');
-      plugin.scratchData = JSON.stringify(fs.readFileSync(plugin.scratchFile) || '{}');
+      plugin.scratchData = require(plugin.scratchFile) || '{}';
 
       console.log(plugin.scratchFile);
       console.log(plugin.scratchData);
