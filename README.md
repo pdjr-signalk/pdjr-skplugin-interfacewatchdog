@@ -9,10 +9,10 @@ more specified Signal K interfaces, triggering an exception when
 throughput on an interface falls outside some specified parameters.
 
 Each interface is monitored for a failure to start producing data as
-well as for the circumstance where its data throughput falls below a
-certain threshold,
+well as for the circumstance where throughput on an established data
+connection falls below a certain threshold. 
 This allows detection of interfaces which fail to operate on start-up
-as well as interface failures during normal operation.
+as well interfaces which fail or lock-up during normal operation.
 
 When the plugin detects an issue with an interface it responds by
 writing a message to the server log, issuing a notification, and,
@@ -79,36 +79,37 @@ seconds.
 An interface will be monitored by the plugin if its *waitForActivity*
 configuration property has a non-zero value.
 
-If at any time throughput on a monitored interface falls below and
-remains below the configured *threshold* value for *waitForActivity*
-heartbeats then the interface is considered to be in a problem state.
+If throughput on a monitored interface falls below and remains below
+the configured *threshold* value for *waitForActivity* heartbeats then
+the interface is considered to be in a problem state.
+The plugin will handle this condition in one of two ways dependent upon
+the value of the *rebootLimit* configuration property.
 
-If an interface's *rebootLimit* is configured to zero and the interface
-enters a problem state then a 'warn' notification is issued on the
-interface's *notificationPath* and the interface removed from further
+If *rebootLimit* is zero, then a 'warn' notification is issued on the
+configured *notificationPath* and the interface is removed from further
 monitoring.
 
-If, however, *rebootLimit* is non-zero then the Signal K server will be
-restarted up to a maximum of *rebootLimit* times in an attempt to
-restore the interface to a working state.
-After each restart, the interface is monitored for *waitForActivity*
-cycles in the hope that it wakes up.
-A second or two before a reboot sequence commences, an 'alert'
+If *rebootLimit* is non-zero, then the plugin will commence a sequence
+of server restarts up to the maximum configured by *rebootLimit*.
+After each restart the interface is monitored in the way described
+obove to determine whether or not the interface has been restored to a
+working state.
+A second or two before a restart sequence commences, an 'alert'
 notification is issued on *notificationPath*: this advance warning
 aims to allow an alarm handler or annunciator to detect the 'alert'
-condition and do its thing.
+condition and do its thing before the host server is restarted.
 
-If this rather crude remedial strategy fails to restore interface
-throughput above *threshold*, then a 'warn' notification is issued
-and the interface removed from further monitoring.
+If the restart sequence fails to restore interface throughput above
+*threshold*, then a 'warn' notification is issued and the interface is
+removed from further monitoring.
 
 If throughput on a problem interface recovers above *threshold* then
 a 'normal' notification is issued and monitoring proceeds as usual.
   
-If and when the Signal K Node process is killed it will only restart
-automatically if, as is normally the case, Signal K is started by the
-host operating system's process manager and it is configured to support
-this behaviour.
+Be aware that a server restart is initiated by killing the parent Node
+process: Signal K will only restart automatically if, as will be the
+case after a normal installation, it is configured to be started by
+the host operating system's process manager.
 
 Significant actions taken by the plugin are written to the server log.
 
