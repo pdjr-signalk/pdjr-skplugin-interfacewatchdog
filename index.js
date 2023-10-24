@@ -137,7 +137,7 @@ module.exports = function(app) {
             if (throughput > 0) { plugin.scratchData.activeCount++; } else { plugin.scratchData.inactiveCount++; }
 
             if (plugin.scratchData.activeCount == 1) {
-              log.N(`interface '${interface.name}' is alive`, false);
+              log.N(`interface '${interface.name}' is alive`);
               App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
             }
 
