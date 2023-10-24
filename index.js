@@ -119,6 +119,17 @@ module.exports = function(app) {
 
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
+    // Get scratchData persisted over restarts
+    plugin.scratchFile = require('path').join( app.getDataDirPath(), plugin.id + '.json');
+    try { plugin.scratchData = require(plugin.scratchFile); } catch(e) { plugin.scratchData = {}; }
+    plugin.options.interfaces.forEach(interface => {
+      if (!plugin.scratchData[interface.name]) {
+        plugin.scratchData[interface.name] = { notified: 0, activeCount: 0, inactiveCount: 0, restartCount: 0 }
+      } else {
+        plugin.scratchData[interface.name] = { ...plugin.scratchData[interface.name], ...{ notified: 0, activeCount: 0, inactiveCount: 0 } }
+      }
+    });
+
     // If we have some enabled interfaces then go into production.
     if (plugin.options.interfaces.length > 0) {
 
@@ -126,14 +137,7 @@ module.exports = function(app) {
       log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${plugin.options.interfaces.map(interface => (interface.name  + ((interface.restart)?'('+ ((interface.scratchpad.restartCount > 0)?'R':'r') + ')':''))).join(', ')}`);
       plugin.options.interfaces.forEach(interface => {
         App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Waiting for interface to become active' }, plugin.id);
-      });
-      
-      // Get a persistent storage
-      plugin.scratchFile = require('path').join( app.getDataDirPath(), plugin.id + '.json');
-      try { plugin.scratchData = require(plugin.scratchFile); } catch(e) { plugin.scratchData = {}; }
-
-      console.log(plugin.scratchFile);
-      console.log(plugin.scratchData);
+      });  
 
       // Register as a serverevent recipient.
       app.on('serverevent', (e) => {
@@ -151,45 +155,44 @@ module.exports = function(app) {
             const throughput = (interfaceThroughputs[interface.interface])?interfaceThroughputs[interface.interface]:0;
 
             if (throughput > 0) {
-              interface.scratchpad.activeCount++;
-              if (interface.scratchpad.notified == 0) {
-                interface.scratchpad.notified = 1;
+              plugin.scratchData.activeCount++;
+              if (plugin.scratchData.notified == 0) {
+                plugin.scratchData.notified = 1;
                 log.N(`interface '${interface.name}' is alive`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
               }
             } else {
-              interface.scratchpad.inactiveCount++;
+              plugin.scratchData.inactiveCount++;
             }
 
             if (throughput <= interface.threshold) {
-              if (interface.scratchpad.inactiveCount == interface.waitForActivity) {
+              if (plugin.scratchData.inactiveCount == interface.waitForActivity) {
                 // We've waited long enough: either enter reboot cycle or disable
                 if (interface.restartLimit != 0) {
-                  if ((interface.scratchpad.restartCount < interface.restartLimit)) {
-                    log.W(`interface '${interface.name}' ${(interface.activeCount)?' throughput is below threshold':'has not started'}: restarting system (attempt ${++interface.scratchpad.restartCount} of ${interface.restartLimit})`, false);
-                    interface.scratchpad.inactiveCount = 0;
-                    if ((interface.scratchpad.restartCount == 1) && (interface.scratchpad.notified == 1)) {
+                  if ((plugin.scratchData.restartCount < interface.restartLimit)) {
+                    log.W(`interface '${interface.name}' ${(interface.activeCount)?' throughput is below threshold':'has not started'}: restarting system (attempt ${++plugin.scratchData.restartCount} of ${interface.restartLimit})`, false);
+                    if (plugin.scratchData.notified == 1) {
                       App.notify(interface.notificationPath, { state: 'alert', method: [], message: 'Reboot recovery process started' }, plugin.id);
-                      interface.scratchpad.notified = 2;
+                      plugin.scratchData.notified = 2;
                     }
-                    app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
+                    fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
                     setTimeout(() => { process.exit(); }, 1000);
                   }
                 } else {
                   log.W(`interface '${interface.name}' ${(interface.activeCount)?'has persistent low throughput':'has not started'} and will now be ignored`, false);
                   App.notify(interface.notificationPath, { state: 'warn', method: [], message: 'Monitoring disabled (interface is dead)' }, plugin.id);
-                  interface.scratchpad.notified = interface.scratchpad.restartCount = interface.scratchpad.inactiveCount = 0;
-                  app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
+                  plugin.scratchData.notified = plugin.scratchData.restartCount = plugin.scratchData.activeCount = plugin.scratchData.inactiveCount = 0;
+                  fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
                   plugin.options.interfaces.splice(i, 1);
                 }
               }         
             } else {
-              if (interface.scratchpad.notified == 2) {
+              if (plugin.scratchData.notified == 2) {
                 log.N(`interface '${interface.name}' throughput is above threshold`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface throughput is normal' }, plugin.id);
-                interface.scratchpad.activeCount = interface.scratchpad.inactiveCount = interface.scratchpad.restartCount = 0;
-                interface.scratchpad.notified = 1;
-                app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
+                plugin.scratchData.activeCount = plugin.scratchData.inactiveCount = plugin.scratchData.restartCount = 0;
+                plugin.scratchData.notified = 1;
+                fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
               }
             }
           }
@@ -201,8 +204,6 @@ module.exports = function(app) {
   }
 
   plugin.stop = function() {
-    interface.scratchpad.notified = 0;
-    app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
   }
 
   return(plugin);
