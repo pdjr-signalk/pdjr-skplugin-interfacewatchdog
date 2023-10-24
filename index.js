@@ -14,6 +14,8 @@
  * permissions and limitations under the License.
  */
 
+const fs = require('fs');
+
 const myApp = require('./lib/signalk-libapp/App.js');
 const Log = require('./lib/signalk-liblog/Log.js');
 
@@ -107,22 +109,32 @@ module.exports = function(app) {
   
   plugin.start = function(options) {
 
-    // Make plugin.options by merging defaults and options.
+    // Make plugin.options by merging defaults and options and dropping
+    // any disabled interfaces (i.e where waitForActivity == 0).
     plugin.options = {};
-    plugin.options.interfaces = options.interfaces.map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ name: interface.interface, notificationPath: `notifications.plugin.${plugin.id}.interfaces.${interface.name}` },  ...interface }));
+    plugin.options.interfaces =
+      options.interfaces
+      .map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ name: interface.interface, notificationPath: `notifications.plugin.${plugin.id}.interfaces.${interface.name}` },  ...interface }))
+      .filter(interface => (interface.waitForActivity != 0));
+
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
-    // Drop disabled interfaces (i.e. where waitForActivity == 0)
-    plugin.options.interfaces = plugin.options.interfaces.filter(interface => (interface.waitForActivity != 0));
-  
-    // Report activity to dashboard and notification path
+    // If we have some enabled interfaces then go into production.
     if (plugin.options.interfaces.length > 0) {
+
+      // Report plugin status to dashboard and notify on each interface.
       log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${plugin.options.interfaces.map(interface => (interface.name  + ((interface.restart)?'('+ ((interface.scratchpad.restartCount > 0)?'R':'r') + ')':''))).join(', ')}`);
-        
       plugin.options.interfaces.forEach(interface => {
         App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Waiting for interface to become active' }, plugin.id);
       });
-            
+      
+      // Get a persistent storage
+      plugin.scratchFile = require('path').join( app.getDataDirPath(), plugin.id + '.json');
+      plugin.scratchData = JSON.stringify(fs.getFileSync(plugin.scratchFile) || '{}');
+
+      console.log(plugin.scratchFile);
+      console.log(plugin.scratchData);
+      
       // Register as a serverevent recipient.
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
