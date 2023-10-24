@@ -134,15 +134,11 @@ module.exports = function(app) {
             const interface = plugin.options.interfaces[i]
             const throughput = (interfaceThroughputs[interface.interface])?interfaceThroughputs[interface.interface]:0;
 
-            if (throughput > 0) {
-              plugin.scratchData.activeCount++;
-              if (plugin.scratchData.notified == 0) {
-                plugin.scratchData.notified = 1;
-                log.N(`interface '${interface.name}' is alive`, false);
-                App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
-              }
-            } else {
-              plugin.scratchData.inactiveCount++;
+            if (throughput > 0) { plugin.scratchData.activeCount++; } else { plugin.scratchData.inactiveCount++; }
+
+            if (plugin.scratchData.activeCount == 1) {
+              log.N(`interface '${interface.name}' is alive`, false);
+              App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
             }
 
             if (throughput <= interface.threshold) {
