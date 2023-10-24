@@ -131,28 +131,30 @@ module.exports = function(app) {
 
           // Iterate over configured interfaces.
           for (var i = plugin.options.interfaces.length - 1; i >= 0; i--) {
-            var interface = plugin.options.interfaces[i]
+            var interface = plugin.options.interfaces[i];
+            var scratchData = plugin.scratchData[interface.name];
             var throughput = (interfaceThroughputs[interface.interface])?interfaceThroughputs[interface.interface]:0;
+
             console.log(">>>>> %s", throughput);
 
-            if (throughput > 0) { plugin.scratchData.activeCount++; } else { plugin.scratchData.inactiveCount++; }
+            if (throughput > 0) { cratchData.activeCount++; } else { scratchData.inactiveCount++; }
 
-            console.log(">>>> %s", plugin.scratchData.activeCount);
-            
-            if (plugin.scratchData.activeCount == 1) {
+            console.log(">>>> %s", scratchData.activeCount);
+
+            if (scratchData.activeCount == 1) {
               log.N(`interface '${interface.name}' is alive`);
               App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
             }
 
             if (throughput <= interface.threshold) {
-              if (plugin.scratchData.inactiveCount == interface.waitForActivity) {
+              if (scratchData.inactiveCount == interface.waitForActivity) {
                 // We've waited long enough: either enter reboot cycle or disable
                 if (interface.restartLimit != 0) {
-                  if ((plugin.scratchData.restartCount < interface.restartLimit)) {
-                    log.W(`interface '${interface.name}' ${(interface.activeCount)?' throughput is below threshold':'has not started'}: restarting system (attempt ${++plugin.scratchData.restartCount} of ${interface.restartLimit})`, false);
-                    if (plugin.scratchData.notified == 1) {
+                  if ((scratchData.restartCount < interface.restartLimit)) {
+                    log.W(`interface '${interface.name}' ${(interface.activeCount)?' throughput is below threshold':'has not started'}: restarting system (attempt ${++scratchData.restartCount} of ${interface.restartLimit})`, false);
+                    if (scratchData.notified == 1) {
                       App.notify(interface.notificationPath, { state: 'alert', method: [], message: 'Reboot recovery process started' }, plugin.id);
-                      plugin.scratchData.notified = 2;
+                      scratchData.notified = 2;
                     }
                     fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
                     setTimeout(() => { process.exit(); }, 1000);
@@ -161,18 +163,18 @@ module.exports = function(app) {
                   if (plugin.options.stopWatching) {
                     log.W(`interface '${interface.name}' ${(interface.activeCount)?'has persistent low throughput':'has not started'} stopping watching`, false);
                     App.notify(interface.notificationPath, { state: 'warn', method: [], message: 'Interface is dead)' }, plugin.id);
-                    plugin.scratchData.restartCount = 0;
+                    scratchData.restartCount = 0;
                     fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
                     plugin.options.interfaces.splice(i, 1);
                   }
                 }
               }         
             } else {
-              if (plugin.scratchData.notified == 2) {
+              if (scratchData.notified == 2) {
                 log.N(`interface '${interface.name}' throughput is above threshold`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface throughput is normal' }, plugin.id);
-                plugin.scratchData.activeCount = plugin.scratchData.inactiveCount = plugin.scratchData.restartCount = 0;
-                plugin.scratchData.notified = 1;
+                scratchData.activeCount = plugin.scratchData.inactiveCount = plugin.scratchData.restartCount = 0;
+                scratchData.notified = 1;
                 fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
               }
             }
