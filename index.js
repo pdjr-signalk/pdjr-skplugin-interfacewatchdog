@@ -145,15 +145,17 @@ module.exports = function(app) {
             if (throughput <= interface.threshold) {
               if (interface.scratchpad.inactiveCount == interface.waitForActivity) {
                 // We've waited long enough: either enter reboot cycle or disable
-                if ((interface.restartLimit != 0) && (interface.scratchpad.restartCount < interface.restartLimit)) {
-                  log.W(`interface '${interface.name}' ${(interface.activeCount)?' throughput is below threshold':'has not started'}: restarting system (attempt ${++interface.scratchpad.restartCount} of ${interface.restartLimit})`, false);
-                  interface.scratchpad.inactiveCount = 0;
-                  if ((interface.scratchpad.restartCount == 1) && (interface.scratchpad.notified == 1)) {
-                    App.notify(interface.notificationPath, { state: 'alert', method: [], message: 'Reboot recovery process started' }, plugin.id);
-                    interface.scratchpad.notified = 2;
+                if (interface.restartLimit != 0) {
+                  if ((interface.scratchpad.restartCount < interface.restartLimit)) {
+                    log.W(`interface '${interface.name}' ${(interface.activeCount)?' throughput is below threshold':'has not started'}: restarting system (attempt ${++interface.scratchpad.restartCount} of ${interface.restartLimit})`, false);
+                    interface.scratchpad.inactiveCount = 0;
+                    if ((interface.scratchpad.restartCount == 1) && (interface.scratchpad.notified == 1)) {
+                      App.notify(interface.notificationPath, { state: 'alert', method: [], message: 'Reboot recovery process started' }, plugin.id);
+                      interface.scratchpad.notified = 2;
+                    }
+                    app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
+                    setTimeout(() => { process.exit(); }, 1000);
                   }
-                  app.savePluginOptions(plugin.options, () => { app.debug(`saved options ${JSON.stringify(plugin.options)}`); });
-                  setTimeout(() => { process.exit(); }, 1000);
                 } else {
                   log.W(`interface '${interface.name}' ${(interface.activeCount)?'has persistent low throughput':'has not started'} and will now be ignored`, false);
                   App.notify(interface.notificationPath, { state: 'warn', method: [], message: 'Monitoring disabled (interface is dead)' }, plugin.id);
