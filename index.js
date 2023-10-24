@@ -126,15 +126,22 @@ module.exports = function(app) {
       // Register as a serverevent recipient.
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
+          // Get throughput statistics for all configured interfaces
+          const interfaceThroughputs =
+            Object.keys(e.data.providerStatistics)
+            .filter(key => plugin.options.interfaces.map(interface => interface.interface).includes(key))
+            .reduce((a,key) => { a[key] = e.data.providerStatistics[key].deltaRate }, {});
+          app.debug(`interface throughputs: ${JSON.stringify(interfaceThroughputs)}`)
+
           // Iterate over configured interfaces.
           for (var i = plugin.options.interfaces.length - 1; i >= 0; i--) {
             const interface = plugin.options.interfaces[i]
-            const throughput = (e.data.providerStatistics[interface.interface])?e.data.providerStatistics[interface.interface].deltaRate:0;
-            app.debug(`interface '${interface.name}' reports ${throughput} deltas/s throughput`);
+            const throughput = (interfaceThroughputs[interface.interface])?interfaceThroughputs[interface.interface]:0;
+
             if (throughput > 0) {
               interface.scratchpad.activeCount++;
               if (interface.scratchpad.notified == 0) {
-                interface.scratchpad.notified = 1
+                interface.scratchpad.notified = 1;
                 log.N(`interface '${interface.name}' is alive`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
               }
