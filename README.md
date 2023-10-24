@@ -68,6 +68,13 @@ which configures watchdog behaviour for a single Signal K interface.
   </dd>
 </dl>
 
+There is no restriction on the number of times a named interface can
+occur in the *Interfaces* array, although it only makes sense if one
+entry triggers a reboot.
+My ship has two NMEA busses bridged to a single interface and careful
+setting of *threshold* on two *Interface* configurations allows me to
+monitor the presence/absence of both data streams.
+
 ## Operation
 
 The plugin uses the Signal K SERVERINFO event mechanism as its basic
