@@ -173,7 +173,7 @@ module.exports = function(app) {
               if (scratchData.notified == 2) {
                 log.N(`interface '${interface.name}' throughput is above threshold`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface throughput is normal' }, plugin.id);
-                scratchData.activeCount = plugin.scratchData.inactiveCount = plugin.scratchData.restartCount = 0;
+                scratchData.activeCount = scratchData.inactiveCount = scratchData.restartCount = 0;
                 scratchData.notified = 1;
                 fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
               }
