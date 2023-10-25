@@ -114,7 +114,7 @@ module.exports = function(app) {
 
       // Report plugin status to dashboard and notify on each interface.
       var dbMessage = plugin.options.interfaces
-      .reduce((a,i) => { return((a.includes(i.interface))?a:(a.push(i.interface))); }, [])
+      .reduce((a,i) => { return((a.contains(i.interface))?a:(a.push(i.interface))); }, [])
       .map(i => { i + '[' + plugin.options.interfaces.filter(ii => (ii.interface == i)).map(ii => (ii.name)).sort().join(',') + ']'})
       .sort().join(', ');
 
