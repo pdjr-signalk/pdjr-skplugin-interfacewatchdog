@@ -97,7 +97,7 @@ module.exports = function(app) {
     plugin.options = {};
     plugin.options.interfaces =
       options.interfaces
-      .map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ name: interface.interface, notificationPath: `notifications.plugin.${plugin.id}.interfaces.${interface.name}` },  ...interface }))
+      .map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ name: interface.interface, notificationPath: `notifications.plugins.${plugin.id}.watchdogs.${interface.name}` },  ...interface }))
       .filter(interface => (interface.startActionThreshold != 0));
 
     // Get shadow options persisted over restarts
