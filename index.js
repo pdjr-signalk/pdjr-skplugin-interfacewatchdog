@@ -116,7 +116,7 @@ module.exports = function(app) {
       log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${plugin.options.interfaces.map(interface => (interface.name + '[' + interface.interface + ']')).join(', ')}`);
       plugin.options.interfaces.forEach(interface => {
         log.N(`waiting for ${interface.name} on ${interface.interface} to become active`, false);
-        App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Waiting for interface to become active' }, plugin.id);
+        App.notify(interface.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id);
       });  
 
       // Register as a serverevent recipient.
@@ -163,7 +163,7 @@ module.exports = function(app) {
                     if ((!interface.restartCount) || (interface.restartCount < (interface.stopActionThreshold - interface.startActionThreshold))) {
                       interface.restartCount = (interface.restartCount)?(interface.restartCount + 1):1;
                       log.W(`${interface.name} on ${interface.interface} is triggering a server restart (${interface.restartCount} of ${interface.stopActionThreshold - interface.startActionThreshold})`, false);
-                      App.notify(interface.notificationPath, { state: 'warn', method: [], message: `Server restart (${interface.restartCount} of ${interface.stopActionThreshold - interface.startActionThreshold})` }, plugin.id);
+                      App.notify(interface.notificationPath, { state: 'alarm', method: [], message: `Server restart (${interface.restartCount} of ${interface.stopActionThreshold - interface.startActionThreshold})` }, plugin.id);
                       setTimeout(() => { saveShadowOptions(); process.exit(); }, 1000);
                     } else {
                       interface.state = 'done';
@@ -178,7 +178,7 @@ module.exports = function(app) {
                 break;
               case 'done':
                 log.W(`terminating watchdog on ${interface.name} on ${interface.interface}`, false);
-                App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Terminating watchdog` });
+                App.notify(interface.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
                 delete interface.restartCount;
                 saveShadowOptions();
                 plugin.options.interfaces.splice(i, 1);
