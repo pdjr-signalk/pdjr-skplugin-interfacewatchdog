@@ -161,7 +161,7 @@ module.exports = function(app) {
               case 'problem':
                 switch (interface.action) {
                   case 'restart-server':
-                    if ((!interface.restartCount) || (interface.restartCount < (interfaceActionThreshold - interfaceProblemThreshold))) {
+                    if ((!interface.restartCount) || (interface.restartCount < (interface.actionThreshold - interfaceProblemThreshold))) {
                       interface.restartCount = (interface.restartCount)?(interface.restartCount + 1):1;
                       console.log(">>>>>> %s", interface.restartCount);
                       app.debug(`${interface.name} restarting`);
