@@ -160,8 +160,8 @@ module.exports = function(app) {
                 switch (interface.action) {
                   case 'restart-server':
                     app.debug(`${interface.name} restarting`);
-                    log.W(`${interface.name} triggering server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})`, false);
-                    App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})` }, plugin.id);
+                    log.W(`${interface.name} triggering server restart (${interface.actionThreshold - interface.problemCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
+                    App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.actionThreshold - interface.problemCount} of ${interface.actionThreshold - interface.problemThreshold})` }, plugin.id);
                     setTimeout(() => {
                       fs.writeFile(shadowOptionsFilename, JSON.stringify(plugin.options));
                       process.exit();
