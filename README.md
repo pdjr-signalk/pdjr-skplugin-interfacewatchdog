@@ -6,20 +6,15 @@ Interface activity watchdog for Signal K.
 
 **pdjr-skplugin-interfacewatchdog** monitors the activity of one or
 more specified Signal K interfaces, triggering an exception when
-throughput on an interface falls outside some specified parameters.
-
-Each interface is monitored for a failure to start producing data as
-well as for the circumstance where throughput on an established data
-connection falls below a certain threshold. 
-This allows detection of interfaces which fail to operate on start-up
-as well interfaces which fail or lock-up during normal operation.
+throughput on an interface falls to or below some specified rate.
 
 When the plugin detects an issue with an interface it responds by
-writing a message to the server log, issuing a notification, and,
-either disabling monitoring or restarting the host Signal K server.
+writing a message to the server log, issuing a 'alert' notification,
+and either disabling monitoring or restarting the host Signal K server
+in the hope that the interface can be re-awakened.
 If server restarting is configured, the maximum number of allowed
-restarts can be limited to prevent a persistent loss of service
-resulting from runaway reboots.
+restarts must be limited to prevent a persistent loss of service
+resulting from runaway reboots on a dead interface.
 
 ## Configuration
 
@@ -41,19 +36,19 @@ which configures watchdog behaviour for a single Signal K interface.
     This must match one of the ID's displayed in the Signal K dashboard
     under <em>Server -> Data Connections</em>.
   </dd>
-  <dt>Activity threshold in deltas/s <code>threshold</code></dt>
+  <dt>Throughput threshold in deltas/s <code>threshold</code></dt>
   <dd>
     Optional integer data rate (in deltas per second) at or below which
-    an exception should be raised.
+    a problem should be logged.
     Defaults to 0 which will only identify interfaces that are completely
     dead.
   <dd>
-  <dt>Wait this number of cycles for activity <code>waitForActivity</code></dt>
+  <dt>Start taking action after this many problems <code>problemThreshold</code></dt>
   <dd>
-    Optional number of server status reporting cycles to wait for activity
-    on the interface to rise above <em>threshold</em> before raising an
-    exception (0 says wait indefinitely and so disables watchdog function
-    on this interface.).
+    If the number of problems counted on *interface* reaches this value
+    then perform the configured action (see below).
+    A value of 0 says wait indefinitely and so disables watchdog function
+    on this interface.
     Defaults to 3 which equates to about 10 - 15 seconds.
   </dd>
   <dt>Maximum number of restart attempts <code>restartLimit</code></dt>
