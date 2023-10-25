@@ -103,10 +103,10 @@ module.exports = function(app) {
     const shadowOptionsFilename = require('path').join( app.getDataDirPath(), 'shadow-options.json');
     var shadowOptions; 
     try { shadowOptions = require(shadowOptionsFilename); } catch(e) { shadowOptions = { interfaces: [] }; }
-    plugin.options.interfaces.forEach(interface => {
+    plugin.options.interfaces = plugin.options.interfaces.map(interface => {
       var shadowInterface = shadowOptions.interfaces.reduce((a,i) => ((i.name == interface.name)?i:a), {});
-      interface = { ...{ enabled: true, problemCount: 0, state: 'waiting' }, ...shadowInterface, ...interface };    
-    })
+      return({ ...{ problemCount: 0, state: 'waiting' }, ...shadowInterface, ...interface });    
+    });
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     // If we have some enabled interfaces then go into production.
