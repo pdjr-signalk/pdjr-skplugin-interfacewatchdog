@@ -122,6 +122,7 @@ module.exports = function(app) {
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
           // Get throughput statistics for all configured interface
+          console.log(JSON.stringify(e.data, null, 2));
           const interfaceThroughputs =
             Object.keys(e.data.providerStatistics)
             .filter(key => plugin.options.interfaces.map(interface => interface.interface).includes(key))
