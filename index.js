@@ -175,7 +175,7 @@ module.exports = function(app) {
                 app.debug(`${interface.name}' terminating watchdog`);
                 log.W(`${interface.name}' terminating watchdog`, false);
                 App.notify(interface.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
-                plugin.options.interfaces.slice(i, 1);
+                plugin.options.interfaces.splice(i, 1);
                 break;
             }
           }
