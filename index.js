@@ -100,7 +100,7 @@ module.exports = function(app) {
       .filter(interface => (interface.problemThreshold != 0));
 
     // Get shadow options persisted over restarts
-    const shadowOptionsFilename = require('path').join( app.getDataDirPath(), plugin.id + '.json');
+    const shadowOptionsFilename = require('path').join( app.getDataDirPath(), 'shadow-options.json');
     var shadowOptions; 
     try { shadowOptions = require(shadowOptionsFilename); } catch(e) { shadowOptions = { interfaces: [] }; }
     plugin.options.interfaces.forEach(interface => {
