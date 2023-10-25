@@ -169,7 +169,7 @@ module.exports = function(app) {
               case 'action':
                 if (interface.action == 'restart') {
                   Log.W(`${interface.name} triggering server restart (${scratchData.actionCount} of ${interface.actionThreshold})`, false);
-                  App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionCount} of ${interface.actionThreshold}')`, plugin.id);
+                  App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionCount} of ${interface.actionThreshold}')` }, plugin.id);
                   setTimeout(() => { process.exit(); }, 1000);
                 }
                 break;
