@@ -114,7 +114,8 @@ module.exports = function(app) {
     if (plugin.options.watchdogs.length > 0) {
 
       // Report plugin status to dashboard and notify on each watchdog.
-      log.N(`watching interface${(plugin.options.watchdogs.length == 1)?'':'s'} ${_.sortedUniq(plugin.options.watchdogs.map(i => (i.interface))).join(', ')}`);
+      var interfaces = _.sortedUniq(plugin.options.watchdogs.map(i => (i.interface)));
+      log.N(`watching interface${(interfaces.length == 1)?'':'s'} ${interfaces.join(', ')}`);
       plugin.options.watchdogs.forEach(watchdog => {
         app.debug(`waiting for ${watchdog.name} on ${watchdog.interface} to become active`, false);
         App.notify(watchdog.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id);
