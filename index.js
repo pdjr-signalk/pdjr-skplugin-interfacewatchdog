@@ -147,7 +147,7 @@ module.exports = function(app) {
 
             app.debug(JSON.stringify(interface));
 
-            switch (scratchData.state) {
+            switch (interface.state) {
               case 'waiting':
                 break;
               case 'newly-normal':
