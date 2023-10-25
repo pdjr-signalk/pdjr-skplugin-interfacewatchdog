@@ -99,14 +99,15 @@ module.exports = function(app) {
       .map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ name: interface.interface, notificationPath: `notifications.plugin.${plugin.id}.interfaces.${interface.name}` },  ...interface }))
       .filter(interface => (interface.problemThreshold != 0));
 
-    app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
-
-    // Get scratchData persisted over restarts
-    plugin.scratchFile = require('path').join( app.getDataDirPath(), plugin.id + '.json');
-    try { plugin.scratchData = require(plugin.scratchFile); } catch(e) { plugin.scratchData = { "dirty": false }; }
+    // Get shadow options persisted over restarts
+    const shadowOptionsFilename = require('path').join( app.getDataDirPath(), plugin.id + '.json');
+    var shadowOptions; 
+    try { shadowOptions = require(shadowOptionsFilename); } catch(e) { shadowOptions = { interfaces: [] }; }
     plugin.options.interfaces.forEach(interface => {
-      plugin.scratchData[interface.name] = { ...{ problemCount: 0, state: 'waiting' }, ...plugin.scratchData[interface.name] }
+      interface = { ...{ enabled: true, problemCount: 0, state: 'waiting' }, ...(shadowOptions.interfaces[interface.name] || { }), ...interface }
     });
+
+    app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     // If we have some enabled interfaces then go into production.
     if (plugin.options.interfaces.length > 0) {
@@ -131,21 +132,20 @@ module.exports = function(app) {
           // Iterate over configured interfaces.
           for (var i = plugin.options.interfaces.length - 1; i >= 0; i--) {
             var interface = plugin.options.interfaces[i];
-            var scratchData = plugin.scratchData[interface.name];
             var throughput = (interfaceThroughputs[interface.interface])?interfaceThroughputs[interface.interface]:0;
 
             if ((throughput > 0) && (interface.state == 'waiting')) interface.state = 'active';
 
             if (throughput <= interface.threshold) {
-              scratchData.problemCount++;
-              if (scratchData.problemCount >= interface.problemThreshold) scratchData.state = 'problem';
-              if (scratchData.problemCount >= interface.actionThreshold) scratchData.state = 'done'
+              interface.problemCount++;
+              if (interface.problemCount >= interface.problemThreshold) interface.state = 'problem';
+              if (interface.problemCount >= interface.actionThreshold) interface.state = 'done'
             } else {
-              if (scratchData.state != 'normal') scratchData.state = 'newly-normal';
-              scratchData.problemCount = 0;
+              if (interface.state != 'normal') interface.state = 'newly-normal';
+              interface.problemCount = 0;
             }
 
-            app.debug("CHANNEL %s state %s, problem count %s", interface.name, scratchData.state, scratchData.problemCount);
+            app.debug(JSON.stringify(interface));
 
             switch (scratchData.state) {
               case 'waiting':
@@ -154,7 +154,7 @@ module.exports = function(app) {
                 app.debug(`${interface.name} entered normal operation`);
                 log.W(`${interface.name} entered normal operation`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: `${interface.name} entered normal operation` }, plugin.id);
-                scratchData.state = 'normal'
+                interface.state = 'normal'
                 break;
               case 'normal':
                 break;
@@ -167,7 +167,7 @@ module.exports = function(app) {
                     setTimeout(() => { process.exit(); }, 1000);
                     break;
                   case 'kill-watchdog':
-                    scratchData.state = 'done';
+                    interface.state = 'done';
                     break;
                   default:
                     break;
@@ -189,11 +189,6 @@ module.exports = function(app) {
   }
 
   plugin.stop = function() {
-  }
-
-  updateScratchData = function(interface, options) {
-    plugin.scratchData.dirty = true;
-    plugin.scratchData[interface.name] = { ...plugin.scratchData[interface.name], ...{options} };
   }
 
   return(plugin);
