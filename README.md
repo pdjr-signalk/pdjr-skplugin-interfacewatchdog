@@ -4,22 +4,28 @@ Interface activity watchdog for Signal K.
 
 ## Description
 
-**pdjr-skplugin-interfacewatchdog** monitors the activity of one or
-more specified Signal K interfaces, triggering an exception when
-throughput on an interface falls to or below some specified rate.
+**pdjr-skplugin-interfacewatchdog** implements one or more watchdogs
+on one or more Signal K interfaces, triggering an exception when
+throughput on an interface falls to or below some threshold rate
+specified for the watchdog.
 
-When the plugin detects an issue with an interface it responds by
-writing a message to the server log, issuing a 'alert' notification,
-and either disabling monitoring or restarting the host Signal K server
-in the hope that the interface can be re-awakened.
+When a watchdog detects the appearance or disappearace of an issue
+with interface throughput it responds by writing a message to the
+server log, issuing a notification.
+An issue can be handled in a number of ways: it can be ignored (in
+which case monitoring continues), or the watchdog can be disabled,
+or the host Signal K server can be restarted in the hope that the
+problem interface can be re-awakened.
 If server restarting is configured, the maximum number of allowed
-restarts must be limited to prevent a persistent loss of service
+restarts can be limited to prevent a persistent loss of service
 resulting from runaway reboots on a dead interface.
 
 ## Configuration
 
-The plugin configuration consists of 'Interface' objects, each of
-which configures watchdog behaviour for a single Signal K interface.
+The plugin configuration consists of a *Watchdogs* array containing
+zero or more *Watchdog* objects each of which configures monitoring
+of a specified Signal K interfaces against a specified throughput
+threshold.
 
 <dl>
   <dt>Watchdog name <code>name</code></dt>
@@ -76,34 +82,38 @@ which configures watchdog behaviour for a single Signal K interface.
 </dl>
 
 There is no restriction on the number of times an interface can
-occur in the *Interfaces* array so long as each watchdog has a unique
-name (although it only makes sense if one watchdog triggers a reboot).
+occur in the *Watchdogs* array so long as each *Watchdog* has a unique
+name (although it only makes sense if one *Watchdog* specifies a
+'restart-server' *action*.
 My ship has two NMEA busses bridged to a single interface and careful
-setting of *threshold* on two *Interface* configurations allows me to
-monitor the presence/absence of both data streams.
+setting of *threshold* on two *Watchdog* configurations allows me to
+monitor and notify the health of both data streams.
 
 ## Notifications
+
+Each defined *Watchdog* writes notifications either to its configured
+or default *notificationPath*.
 
 <dl>
   <dt>Waiting for interface to become active</dt>
   <dd>
-    ALERT notification issued as soon as the plugin begins watching
+    ALERT notification issued as soon as the watchdog begins watching
     interface throughput.
   </dd>
   <dt>Started normal operation</dt>
   <dd>
     NORMAL notification issued as soon as interface throughput rises
-    above the specified threshold.
+    above the specified watchdog threshold.
   </dd>
   <dt>Server restart <em>n</em> of <em>m</em></dt>
   <dd>
-    ALARM notification issued each time an interface problem triggers
-    a server restart.
+    ALARM notification issued each time an exceptional throughput
+    triggers a server restart.
   </dd>
   <dt>Terminating watchdog</dt>
   <dd> 
-    WARN notification issued when the plugin stops monitoring the
-    interface.
+    WARN notification issued when the watchdog stops monitoring
+    its particular interface/threshold combination.
   </dd>
 </dl>
 
