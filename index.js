@@ -100,9 +100,9 @@ module.exports = function(app) {
       .filter(interface => (interface.problemThreshold != 0));
 
     // Get shadow options persisted over restarts
-    const shadowOptionsFilename = require('path').join( app.getDataDirPath(), 'shadow-options.json');
+    plugin.shadowOptionsFilename = require('path').join( app.getDataDirPath(), 'shadow-options.json');
     var shadowOptions; 
-    try { shadowOptions = require(shadowOptionsFilename); } catch(e) { shadowOptions = { interfaces: [] }; }
+    try { shadowOptions = require(plugin.shadowOptionsFilename); } catch(e) { shadowOptions = { interfaces: [] }; }
     plugin.options.interfaces = plugin.options.interfaces.map(interface => {
       var shadowInterface = shadowOptions.interfaces.reduce((a,i) => ((i.name == interface.name)?i:a), {});
       return({ ...{ problemCount: 0, state: 'waiting' }, ...shadowInterface, ...interface });    
@@ -168,7 +168,7 @@ module.exports = function(app) {
                     log.W(`${interface.name} triggering server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
                     App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})` }, plugin.id);
                     setTimeout(() => {
-                      fs.writeFileSync(shadowOptionsFilename, JSON.stringify(plugin.options));
+                      saveShadowOptions();
                       process.exit();
                     }, 1000);
                     break;
@@ -184,8 +184,8 @@ module.exports = function(app) {
                 log.W(`${interface.name}' terminating watchdog`, false);
                 App.notify(interface.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
                 delete interface.restartCount;
+                saveShadowOptions();
                 plugin.options.interfaces.splice(i, 1);
-                fs.writeFileSync(shadowOptionsFilename, JSON.stringify(plugin.options));
                 break;
             }
           }
@@ -197,6 +197,11 @@ module.exports = function(app) {
   }
 
   plugin.stop = function() {
+  }
+
+  saveShadowOptions = function() {
+    var shadowStuff = plugin.options.interfaces.map(interface => ({ restartCount: interface.restartCount }));
+    fs.writeFileSync(plugin.shadowOptionsFilename, JSON.stringify(shadowStuff));
   }
 
   return(plugin);
