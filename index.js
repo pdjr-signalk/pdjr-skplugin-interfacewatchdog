@@ -193,7 +193,7 @@ module.exports = function(app) {
   plugin.stop = function() {
   }
 
-  updateScratchData(interface, options) {
+  updateScratchData = function(interface, options) {
     plugin.scratchData.dirty = true;
     plugin.scratchData[interface.name] = { ...plugin.scratchData[interface.name], ...{options} };
   }
