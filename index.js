@@ -136,8 +136,8 @@ module.exports = function(app) {
 
             if (throughput <= interface.threshold) {
               interface.problemCount++;
-              if (interface.problemCount >= interface.problemThreshold) interface.state = 'problem';
-              if (interface.problemCount >= interface.actionThreshold) interface.state = 'done'
+              if (interface.problemCount == interface.problemThreshold) interface.state = 'problem';
+              if (interface.problemCount == interface.actionThreshold) interface.state = 'done'
             } else {
               if (interface.state != 'normal') interface.state = 'newly-normal';
               interface.problemCount = 0;
@@ -152,15 +152,17 @@ module.exports = function(app) {
                 app.debug(`${interface.name} entered normal operation`);
                 log.W(`${interface.name} entered normal operation`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: `${interface.name} entered normal operation` }, plugin.id);
-                interface.state = 'normal'
+                interface.state = 'normal';
+                delete interface.restartCount;
                 break;
               case 'normal':
                 break;
               case 'problem':
                 switch (interface.action) {
                   case 'restart-server':
+                    if (!interface.restartCount) interface.restartCount = 1; else interface.restartCount++;
                     app.debug(`${interface.name} restarting`);
-                    log.W(`${interface.name} triggering server restart (${interface.actionThreshold - interface.problemCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
+                    log.W(`${interface.name} triggering server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
                     App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.actionThreshold - interface.problemCount} of ${interface.actionThreshold - interface.problemThreshold})` }, plugin.id);
                     setTimeout(() => {
                       fs.writeFileSync(shadowOptionsFilename, JSON.stringify(plugin.options));
