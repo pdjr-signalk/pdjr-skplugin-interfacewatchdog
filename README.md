@@ -87,7 +87,7 @@ monitor the presence/absence of both data streams.
 <dl>
   <dt>Waiting for interface to become active</dt>
   <dd>
-    NORMAL notification issued as soon as the plugin begins watching
+    ALERT notification issued as soon as the plugin begins watching
     interface throughput.
   </dd>
   <dt>Started normal operation</dt>
@@ -97,12 +97,12 @@ monitor the presence/absence of both data streams.
   </dd>
   <dt>Server restart <em>n</em> of <em>m</em></dt>
   <dd>
-    WARN notification issued each time an interface problem triggers
+    ALARM notification issued each time an interface problem triggers
     a server restart.
   </dd>
   <dt>Terminating watchdog</dt>
   <dd> 
-    ALERT notification issued when the plugin stops monitoring the
+    WARN notification issued when the plugin stops monitoring the
     interface.
   </dd>
 </dl>
