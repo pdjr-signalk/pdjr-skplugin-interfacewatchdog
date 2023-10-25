@@ -42,15 +42,15 @@ const PLUGIN_SCHEMA = {
             "type": "string"
           },
           "threshold": {
-            "title": "Activity threshold in deltas/s",
+            "title": "Throughput threshold in deltas/s",
             "type": "number"
           },
           "problemThreshold": {
-            "title": "Wait this number of cycles before flagging a problem",
+            "title": "Start taking action after this many problems",
             "type": "number"
           },
           "actionThreshold": {
-            "title": "Wait this number of cycles before taking action",
+            "title": "Stop taking action after this many problems",
             "type": "number"
           },
           "action": {
@@ -67,7 +67,7 @@ const PLUGIN_SCHEMA = {
         "default": { 
           "threshold": 0,
           "problemThreshold": 3,
-          "actionThreshold": 3,
+          "actionThreshold": 6,
           "action": "none"
         }
       }
@@ -105,7 +105,7 @@ module.exports = function(app) {
     plugin.scratchFile = require('path').join( app.getDataDirPath(), plugin.id + '.json');
     try { plugin.scratchData = require(plugin.scratchFile); } catch(e) { plugin.scratchData = { "dirty": false }; }
     plugin.options.interfaces.forEach(interface => {
-        plugin.scratchData[interface.name] = { ...{ problemCount: 0, actionCount: 0, state: '' }, ...plugin.scratchData[interface.name] }
+        plugin.scratchData[interface.name] = { ...{ problemCount: 0, state: '' }, ...plugin.scratchData[interface.name] }
     });
 
     // If we have some enabled interfaces then go into production.
@@ -140,18 +140,12 @@ module.exports = function(app) {
             }
 
             if (throughput <= interface.threshold) {
-              scratchData.state = 'problem';
               scratchData.problemCount++;
-              if (scratchData.problemCount > interface.problemThreshold) {
-                scratchData.actionCount++;
-                scratchData.state = 'action';
-                if (scratchData.actionCount > scratchData.actionThreshold) {
-                  scratchData.state = 'done'
-                }
-              }
+              if (scratchData.problemCount > interface.problemThreshold) scratchData.state = 'problem';
+              if (scratchData.problemCount > interface.actionThreshold) scratchData.state = 'done'
             } else {
               if (scratchData.state != 'normal') scratchData.state = 'newly-normal';
-              scratchData.problemCount = scratchData.actionCount = 0;
+              scratchData.problemCount = 0;
             }
 
             console.log("CHANNEL %s state %s, problem count %s, action count %s", interface.name, scratchData.state, scratchData.problemCount, scratchData.actionCount);
@@ -165,8 +159,6 @@ module.exports = function(app) {
               case 'normal':
                 break;
               case 'problem':
-                break;
-              case 'action':
                 if (interface.action == 'restart') {
                   log.W(`${interface.name} triggering server restart (${scratchData.actionCount} of ${interface.actionThreshold})`, false);
                   App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionCount} of ${interface.actionThreshold}')` }, plugin.id);
