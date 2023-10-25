@@ -163,7 +163,7 @@ module.exports = function(app) {
                     log.W(`${interface.name} triggering server restart (${interface.actionThreshold - interface.problemCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
                     App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.actionThreshold - interface.problemCount} of ${interface.actionThreshold - interface.problemThreshold})` }, plugin.id);
                     setTimeout(() => {
-                      fs.writeFile(shadowOptionsFilename, JSON.stringify(plugin.options));
+                      fs.writeFileSync(shadowOptionsFilename, JSON.stringify(plugin.options));
                       process.exit();
                     }, 1000);
                     break;
