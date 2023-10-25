@@ -147,6 +147,7 @@ module.exports = function(app) {
 
             switch (scratchData.state) {
               case 'newly-normal':
+                app.debug(`${interface.name} entered normal operation`);
                 log.W(`${interface.name} entered normal operation`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: `${interface.name} entered normal operation` }, plugin.id);
                 scratchData.state = 'normal'
