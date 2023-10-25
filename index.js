@@ -105,7 +105,7 @@ module.exports = function(app) {
     plugin.scratchFile = require('path').join( app.getDataDirPath(), plugin.id + '.json');
     try { plugin.scratchData = require(plugin.scratchFile); } catch(e) { plugin.scratchData = { "dirty": false }; }
     plugin.options.interfaces.forEach(interface => {
-        plugin.scratchData[interface.name] = { ...{ problemCount: 0, state: 'startup' }, ...plugin.scratchData[interface.name] }
+      plugin.scratchData[interface.name] = { ...{ problemCount: 0, state: 'waiting' }, ...plugin.scratchData[interface.name] }
     });
 
     // If we have some enabled interfaces then go into production.
@@ -134,6 +134,8 @@ module.exports = function(app) {
             var scratchData = plugin.scratchData[interface.name];
             var throughput = (interfaceThroughputs[interface.interface])?interfaceThroughputs[interface.interface]:0;
 
+            if ((throughput > 0) && (interface.state == 'waiting')) interface.state = 'active';
+
             if (throughput <= interface.threshold) {
               scratchData.problemCount++;
               if (scratchData.problemCount > interface.problemThreshold) scratchData.state = 'problem';
@@ -146,6 +148,8 @@ module.exports = function(app) {
             console.log("CHANNEL %s state %s, problem count %s", interface.name, scratchData.state, scratchData.problemCount);
 
             switch (scratchData.state) {
+              case 'waiting':
+                break;
               case 'newly-normal':
                 app.debug(`${interface.name} entered normal operation`);
                 log.W(`${interface.name} entered normal operation`, false);
@@ -155,11 +159,21 @@ module.exports = function(app) {
               case 'normal':
                 break;
               case 'problem':
-                if (interface.action == 'restart') {
-                  app.debug(`${interface.name} restarting`);
-                  log.W(`${interface.name} triggering server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})`, false);
-                  App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})` }, plugin.id);
-                  setTimeout(() => { process.exit(); }, 1000);
+                switch (interface.action) {
+                  case 'restart':
+                    app.debug(`${interface.name} restarting`);
+                    log.W(`${interface.name} triggering server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})`, false);
+                    App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})` }, plugin.id);
+                    setTimeout(() => { process.exit(); }, 1000);
+                    break;
+                  case 'stop':
+                    app.debug(`${interface.name} terminating watchdog`);
+                    log.W(`${interface.name}' terminating watchdog`, false);
+                    App.notify(interface.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
+                    plugin.options.interfaces.slice(i, 1);  
+                    break;
+                  default:
+                    break;
                 }
                 break;
               case 'done':
