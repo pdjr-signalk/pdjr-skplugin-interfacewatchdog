@@ -115,7 +115,7 @@ module.exports = function(app) {
       // Report plugin status to dashboard and notify on each interface.
       log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${plugin.options.interfaces.map(interface => (interface.name)).join(', ')}`);
       plugin.options.interfaces.forEach(interface => {
-        app.debug(`waiting for ${interface.name} to become active`);
+        log.N(`waiting for ${interface.name} to become active`, false);
         App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Waiting for interface to become active' }, plugin.id);
       });  
 
@@ -150,8 +150,7 @@ module.exports = function(app) {
               case 'waiting':
                 break;
               case 'newly-normal':
-                app.debug(`${interface.name} entered normal operation`);
-                log.W(`${interface.name} entered normal operation`, false);
+                log.N(`${interface.name} entered normal operation`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: `${interface.name} entered normal operation` }, plugin.id);
                 interface.state = 'normal';
                 delete interface.restartCount;
@@ -163,8 +162,6 @@ module.exports = function(app) {
                   case 'restart-server':
                     if ((!interface.restartCount) || (interface.restartCount < (interface.stopActionThreshold - interface.startActionThreshold))) {
                       interface.restartCount = (interface.restartCount)?(interface.restartCount + 1):1;
-                      console.log(">>>>>> %s", interface.restartCount);
-                      app.debug(`${interface.name} restarting`);
                       log.W(`${interface.name} triggering server restart (${interface.restartCount} of ${interface.stopActionThreshold - interface.startActionThreshold})`, false);
                       App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.restartCount} of ${interface.stopActionThreshold - interface.startActionThreshold})` }, plugin.id);
                       setTimeout(() => { saveShadowOptions(); process.exit(); }, 1000);
@@ -180,8 +177,7 @@ module.exports = function(app) {
                 }
                 break;
               case 'done':
-                app.debug(`${interface.name}' terminating watchdog`);
-                log.W(`${interface.name}' terminating watchdog`, false);
+                log.W(`terminating watchdog on ${interface.name}`, false);
                 App.notify(interface.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
                 delete interface.restartCount;
                 saveShadowOptions();
