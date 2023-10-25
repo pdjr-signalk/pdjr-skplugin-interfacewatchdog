@@ -145,7 +145,7 @@ module.exports = function(app) {
               scratchData.problemCount = 0;
             }
 
-            //console.log("CHANNEL %s state %s, problem count %s", interface.name, scratchData.state, scratchData.problemCount);
+            app.debug("CHANNEL %s state %s, problem count %s", interface.name, scratchData.state, scratchData.problemCount);
 
             switch (scratchData.state) {
               case 'waiting':
