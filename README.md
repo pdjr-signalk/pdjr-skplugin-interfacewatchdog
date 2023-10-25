@@ -23,8 +23,8 @@ resulting from runaway reboots on a dead interface.
 ## Configuration
 
 The plugin configuration consists of a *Watchdogs* array containing
-zero or more *Watchdog* objects each of which configures monitoring
-of a specified Signal K interfaces against a specified throughput
+zero or more *Watchdog* items each of which configures monitoring
+of a specified Signal K interface against a specified throughput
 threshold.
 
 <dl>

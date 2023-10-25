@@ -28,10 +28,10 @@ const PLUGIN_SCHEMA = {
   "title": "Configuration for interfacewatchdog plugin",
   "type": "object",
   "properties": {
-    "interfaces": {
+    "watchdogs": {
       "type": "array",
       "items": {
-        "title": "Interface",
+        "title": "Watchdog",
         "type": "object",
         "properties": {
           "name": {
@@ -74,7 +74,7 @@ const PLUGIN_SCHEMA = {
       }
     }
   },
-  "required": [ "interfaces" ]
+  "required": [ "watchdogs" ]
 };
 const PLUGIN_UISCHEMA = {};
 
@@ -93,103 +93,103 @@ module.exports = function(app) {
   plugin.start = function(options) {
 
     // Make plugin.options by merging defaults and options and dropping
-    // any disabled interfaces (i.e where waitForActivity == 0).
+    // any disabled watchdogs (i.e where waitForActivity == 0).
     plugin.options = {};
-    plugin.options.interfaces =
-      options.interfaces
-      .map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ name: interface.interface, notificationPath: `notifications.plugins.${plugin.id}.watchdogs.${interface.name}` },  ...interface }))
-      .filter(interface => (interface.startActionThreshold != 0));
+    plugin.options.watchdogs =
+      options.watchdogs
+      .map(watchdog => ({ ...plugin.schema.properties.watchdogs.items.default, ...{ name: watchdog.interface, notificationPath: `notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}` },  ...watchdog }))
+      .filter(watchdog => (watchdog.startActionThreshold != 0));
 
     // Get shadow options persisted over restarts
     plugin.shadowOptionsFilename = require('path').join( app.getDataDirPath(), 'shadow-options.json');
     var shadowOptions; 
-    try { shadowOptions = require(plugin.shadowOptionsFilename); } catch(e) { shadowOptions = { interfaces: [] }; }
-    plugin.options.interfaces = plugin.options.interfaces.map(interface => {
-      var shadowInterface = shadowOptions.interfaces.reduce((a,i) => ((i.name == interface.name)?i:a), {});
-      return({ ...{ problemCount: 0, state: 'waiting' }, ...shadowInterface, ...interface });    
+    try { shadowOptions = require(plugin.shadowOptionsFilename); } catch(e) { shadowOptions = { watchdogs: [] }; }
+    plugin.options.watchdogs = plugin.options.watchdogs.map(watchdog => {
+      var shadowwatchdog = shadowOptions.watchdogs.reduce((a,i) => ((i.name == watchdog.name)?i:a), {});
+      return({ ...{ problemCount: 0, state: 'waiting' }, ...shadowwatchdog, ...watchdog });    
     });
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
-    // If we have some enabled interfaces then go into production.
-    if (plugin.options.interfaces.length > 0) {
+    // If we have some enabled watchdogs then go into production.
+    if (plugin.options.watchdogs.length > 0) {
 
-      // Report plugin status to dashboard and notify on each interface.
-      log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${_.sortedUniq(plugin.options.interfaces.map(i => (i.interface))).join(', ')}`);
-      plugin.options.interfaces.forEach(interface => {
-        app.debug(`waiting for ${interface.name} on ${interface.interface} to become active`, false);
-        App.notify(interface.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id);
+      // Report plugin status to dashboard and notify on each watchdog.
+      log.N(`watching interface${(plugin.options.watchdogs.length == 1)?'':'s'} ${_.sortedUniq(plugin.options.watchdogs.map(i => (i.interface))).join(', ')}`);
+      plugin.options.watchdogs.forEach(watchdog => {
+        app.debug(`waiting for ${watchdog.name} on ${watchdog.interface} to become active`, false);
+        App.notify(watchdog.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id);
       });  
 
       // Register as a serverevent recipient.
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
-          // Get throughput statistics for all configured interface
+          // Get throughput statistics for all configured watchdog
           const interfaceThroughputs =
             Object.keys(e.data.providerStatistics)
-            .filter(key => plugin.options.interfaces.map(interface => interface.interface).includes(key))
+            .filter(key => plugin.options.watchdogs.map(watchdog => watchdog.interface).includes(key))
             .reduce((a,key) => { a[key] = e.data.providerStatistics[key].deltaRate; return(a); }, {});
           //app.debug(`interface throughputs: ${JSON.stringify(interfaceThroughputs)}`)
 
-          // Iterate over configured interfaces.
-          for (var i = plugin.options.interfaces.length - 1; i >= 0; i--) {
-            var interface = plugin.options.interfaces[i];
-            var throughput = (interfaceThroughputs[interface.interface])?interfaceThroughputs[interface.interface]:0;
+          // Iterate over configured watchdogs.
+          for (var i = plugin.options.watchdogs.length - 1; i >= 0; i--) {
+            var watchdog = plugin.options.watchdogs[i];
+            var throughput = (interfaceThroughputs[watchdog.interface])?interfaceThroughputs[watchdog.interface]:0;
 
-            if ((throughput > 0) && (interface.state == 'waiting')) interface.state = 'active';
+            if ((throughput > 0) && (watchdog.state == 'waiting')) watchdog.state = 'active';
 
-            if (throughput <= interface.threshold) {
-              interface.problemCount++;
-              if (interface.problemCount == interface.startActionThreshold) interface.state = 'problem';
+            if (throughput <= watchdog.threshold) {
+              watchdog.problemCount++;
+              if (watchdog.problemCount == watchdog.startActionThreshold) watchdog.state = 'problem';
             } else {
-              if (interface.state != 'normal') interface.state = 'newly-normal';
-              interface.problemCount = 0;
+              if (watchdog.state != 'normal') watchdog.state = 'newly-normal';
+              watchdog.problemCount = 0;
             }
 
-            app.debug(JSON.stringify(interface));
+            app.debug(JSON.stringify(watchdog));
 
-            switch (interface.state) {
+            switch (watchdog.state) {
               case 'waiting':
                 break;
               case 'newly-normal':
-                app.debug(`${interface.name} on ${interface.interface} started normal operation`, false);
-                App.notify(interface.notificationPath, { state: 'normal', method: [], message: `Started normal operation` }, plugin.id);
-                interface.state = 'normal';
-                delete interface.restartCount;
+                app.debug(`${watchdog.name} on ${watchdog.interface} started normal operation`, false);
+                App.notify(watchdog.notificationPath, { state: 'normal', method: [], message: `Started normal operation` }, plugin.id);
+                watchdog.state = 'normal';
+                delete watchdog.restartCount;
                 break;
               case 'normal':
                 break;
               case 'problem':
-                switch (interface.action) {
+                switch (watchdog.action) {
                   case 'restart-server':
-                    if ((!interface.restartCount) || (interface.restartCount < (interface.stopActionThreshold - interface.startActionThreshold))) {
-                      interface.restartCount = (interface.restartCount)?(interface.restartCount + 1):1;
-                      app.debug(`${interface.name} on ${interface.interface} is triggering a server restart (${interface.restartCount} of ${interface.stopActionThreshold - interface.startActionThreshold})`, false);
-                      App.notify(interface.notificationPath, { state: 'alarm', method: [], message: `Server restart (${interface.restartCount} of ${interface.stopActionThreshold - interface.startActionThreshold})` }, plugin.id);
+                    if ((!watchdog.restartCount) || (watchdog.restartCount < (watchdog.stopActionThreshold - watchdog.startActionThreshold))) {
+                      watchdog.restartCount = (watchdog.restartCount)?(watchdog.restartCount + 1):1;
+                      app.debug(`${watchdog.name} on ${watchdog.interface} is triggering a server restart (${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold})`, false);
+                      App.notify(watchdog.notificationPath, { state: 'alarm', method: [], message: `Server restart (${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold})` }, plugin.id);
                       setTimeout(() => { saveShadowOptions(); process.exit(); }, 1000);
                     } else {
-                      interface.state = 'done';
+                      watchdog.state = 'done';
                     }
                     break;
                   case 'kill-watchdog':
-                    interface.state = 'done';
+                    watchdog.state = 'done';
                     break;
                   default:
                     break;
                 }
                 break;
               case 'done':
-                app.debug(`terminating watchdog on ${interface.name} on ${interface.interface}`, false);
-                App.notify(interface.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
-                delete interface.restartCount;
+                app.debug(`terminating watchdog on ${watchdog.name} on ${watchdog.interface}`, false);
+                App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
+                delete watchdog.restartCount;
                 saveShadowOptions();
-                plugin.options.interfaces.splice(i, 1);
+                plugin.options.watchdogs.splice(i, 1);
                 break;
             }
           }
         }
       })
     } else {
-      log.W('stopped: no interfaces are configured')
+      log.W('stopped: no watchdogs are configured')
     }
   }
 
@@ -198,7 +198,7 @@ module.exports = function(app) {
 
   function saveShadowOptions() {
     var shadowStuff = {
-      interfaces: plugin.options.interfaces.map(interface => ({ name: interface.name, restartCount: interface.restartCount }))
+      watchdogs: plugin.options.watchdogs.map(watchdog => ({ name: watchdog.name, restartCount: watchdog.restartCount }))
     };
     fs.writeFileSync(plugin.shadowOptionsFilename, JSON.stringify(shadowStuff));
   }
