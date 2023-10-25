@@ -114,12 +114,7 @@ module.exports = function(app) {
     if (plugin.options.interfaces.length > 0) {
 
       // Report plugin status to dashboard and notify on each interface.
-      var is = _.sortedUniq(plugin.options.interfaces.map(i => (i.interface)));
-      console.log(is);
-      var dbMessage = is.map(i => { i + '[' + plugin.options.interfaces.filter(ii => (ii.interface == i)).map(ii => (ii.name)).sort().join(',') + ']'});
-      
-
-      log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${dbMessage}`);
+      log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${_.sortedUniq(plugin.options.interfaces.map(i => (i.interface))).join(', ')}`);
       plugin.options.interfaces.forEach(interface => {
         app.debug(`waiting for ${interface.name} on ${interface.interface} to become active`, false);
         App.notify(interface.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id);
