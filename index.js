@@ -103,9 +103,10 @@ module.exports = function(app) {
     const shadowOptionsFilename = require('path').join( app.getDataDirPath(), 'shadow-options.json');
     var shadowOptions; 
     try { shadowOptions = require(shadowOptionsFilename); } catch(e) { shadowOptions = { interfaces: [] }; }
-    console.log(JSON.stringify(shadowOptions, null, 2));
-    plugin.options.interfaces = plugin.options.interfaces.map(interface => ( { ...{ enabled: true, problemCount: 0, state: 'waiting' }, ...(shadowOptions.interfaces[interface.name] || { }), ...interface } ));
-    
+    plugin.options.interfaces.forEach(interface => {
+      var shadowInterface = shadowOptions.interfaces.reduce((a,i) => ((i.name == interface.name)?i:a), {});
+      interface = { ...{ enabled: true, problemCount: 0, state: 'waiting' }, ...shadowInterface, ...interface };    
+    })
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     // If we have some enabled interfaces then go into production.
@@ -122,7 +123,6 @@ module.exports = function(app) {
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
           // Get throughput statistics for all configured interface
-          console.log(JSON.stringify(e.data, null, 2));
           const interfaceThroughputs =
             Object.keys(e.data.providerStatistics)
             .filter(key => plugin.options.interfaces.map(interface => interface.interface).includes(key))
