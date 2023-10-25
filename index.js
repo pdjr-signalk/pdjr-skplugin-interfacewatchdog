@@ -104,7 +104,7 @@ module.exports = function(app) {
     var shadowOptions; 
     try { shadowOptions = require(shadowOptionsFilename); } catch(e) { shadowOptions = { interfaces: [] }; }
     plugin.options.interfaces = plugin.options.interfaces.map(interface => ( { ...{ enabled: true, problemCount: 0, state: 'waiting' }, ...(shadowOptions.interfaces[interface.name] || { }), ...interface } ));
-
+    
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     // If we have some enabled interfaces then go into production.
@@ -160,7 +160,7 @@ module.exports = function(app) {
               case 'problem':
                 switch (interface.action) {
                   case 'restart-server':
-                    interface.restartCount = (interface.restartCount)?interface.restartCount++:1;
+                    interface.restartCount = (interface.restartCount)?(interface.restartCount + 1):1;
                     console.log(">>>>>> %s", interface.restartCount);
                     app.debug(`${interface.name} restarting`);
                     log.W(`${interface.name} triggering server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
