@@ -174,12 +174,9 @@ module.exports = function(app) {
                 }
                 break;
               case 'done':
-                if (interface.action = 'stop') {
-                  log.W(`${interface.name}' terminating watchdog`, false);
-                  App.notify(interface.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
-                  plugin.options.interfaces.slice(i, 1);
-                }
-                scratchData.state = 'normal';
+                log.W(`${interface.name}' terminating watchdog`, false);
+                App.notify(interface.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
+                plugin.options.interfaces.slice(i, 1);
                 break;
             }
           }
