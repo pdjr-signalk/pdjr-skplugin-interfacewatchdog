@@ -154,7 +154,7 @@ module.exports = function(app) {
               scratchData.problemCount = scratchData.actionCount = 0;
             }
 
-            console.log("CHANNEL %s state %s", interface.name, scratchData.state);
+            console.log("CHANNEL %s state %s, problem count %s, action count %s", interface.name, scratchData.state, scratchData.problemCount, scratchData.actionCount);
 
             switch (scratchData.state) {
               case 'newly-normal':
