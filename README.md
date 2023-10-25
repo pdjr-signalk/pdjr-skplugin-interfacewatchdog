@@ -25,7 +25,7 @@ which configures watchdog behaviour for a single Signal K interface.
   <dt>Watchdog name <code>name</code></dt>
   <dd>
     Optional string property giving a name that will be used in log and
-    notification messages to identify this watchdog.; this can be useful
+    notification paths to identify this watchdog.; this can be useful
     if you want granular reporting on interface behaviour.
     Defaults to <code>interface</code>.
   </dd>
@@ -43,23 +43,21 @@ which configures watchdog behaviour for a single Signal K interface.
     Defaults to 0 which will only identify interfaces that are completely
     dead.
   <dd>
-  <dt>Start taking action after this many problems <code>problemThreshold</code></dt>
+  <dt>Start taking action after this many problems <code>startActionThreshold</code></dt>
   <dd>
-    If the number of problems counted on *interface* reaches this value
+    If the number of problems logged on *interface* reaches this value
     then perform the configured action (see below).
-    A value of 0 says wait indefinitely and so disables watchdog function
-    on this interface.
-    Defaults to 3 which equates to about 10 - 15 seconds.
-  </dd>
-  <dt>Maximum number of restart attempts <code>restartLimit</code></dt>
-  <dd>
-    Optional number of allowed consecutive server restarts because of
-    exceptions on this interface.
+    A value of 0 says wait indefinitely and so disables watchdog
+    function on this interface.
     Defaults to 3.
-    A value of 0 disables any attempts to wake-up this interface by
-    re-starting Signal K: in this case, if the interface is still dead
-    after <em>waitForActivity</em> reporting cycles, then monitoring of
-    the interface will be disabled.
+  </dd>
+  <dt>Stop taking action after this many problems <code>stopActionThreshold</code></dt>
+  <dd>
+    If the number of problems logged on *interface* reaches this value
+    then stop performing the configured action and stop watching this
+    interface.
+    The supplied value must be greater than *startActionThreshold*.
+    Defaults to 6.
   </dd>
   <dt>Notification path <code>notificationPath</code></dt>
   <dd>

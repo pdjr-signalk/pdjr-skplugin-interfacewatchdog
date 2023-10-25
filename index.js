@@ -45,11 +45,11 @@ const PLUGIN_SCHEMA = {
             "title": "Throughput threshold in deltas/s",
             "type": "number"
           },
-          "problemThreshold": {
+          "startActionThreshold": {
             "title": "Start taking action after this many problems",
             "type": "number"
           },
-          "actionThreshold": {
+          "stopActionThreshold": {
             "title": "Stop taking action after this many problems",
             "type": "number"
           },
@@ -66,8 +66,8 @@ const PLUGIN_SCHEMA = {
         "required": [ "interface" ],
         "default": { 
           "threshold": 0,
-          "problemThreshold": 3,
-          "actionThreshold": 6,
+          "startActionThreshold": 3,
+          "stopActionThreshold": 6,
           "action": "none"
         }
       }
@@ -97,7 +97,7 @@ module.exports = function(app) {
     plugin.options.interfaces =
       options.interfaces
       .map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ name: interface.interface, notificationPath: `notifications.plugin.${plugin.id}.interfaces.${interface.name}` },  ...interface }))
-      .filter(interface => (interface.problemThreshold != 0));
+      .filter(interface => (interface.startActionThreshold != 0));
 
     // Get shadow options persisted over restarts
     plugin.shadowOptionsFilename = require('path').join( app.getDataDirPath(), 'shadow-options.json');
@@ -138,7 +138,7 @@ module.exports = function(app) {
 
             if (throughput <= interface.threshold) {
               interface.problemCount++;
-              if (interface.problemCount == interface.problemThreshold) interface.state = 'problem';
+              if (interface.problemCount == interface.startActionThreshold) interface.state = 'problem';
             } else {
               if (interface.state != 'normal') interface.state = 'newly-normal';
               interface.problemCount = 0;
@@ -161,12 +161,12 @@ module.exports = function(app) {
               case 'problem':
                 switch (interface.action) {
                   case 'restart-server':
-                    if ((!interface.restartCount) || (interface.restartCount < (interface.actionThreshold - interface.problemThreshold))) {
+                    if ((!interface.restartCount) || (interface.restartCount < (interface.stopActionThreshold - interface.startActionThreshold))) {
                       interface.restartCount = (interface.restartCount)?(interface.restartCount + 1):1;
                       console.log(">>>>>> %s", interface.restartCount);
                       app.debug(`${interface.name} restarting`);
-                      log.W(`${interface.name} triggering server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
-                      App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})` }, plugin.id);
+                      log.W(`${interface.name} triggering server restart (${interface.restartCount} of ${interface.stopActionThreshold - interface.startActionThreshold})`, false);
+                      App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.restartCount} of ${interface.stopActionThreshold - interface.startActionThreshold})` }, plugin.id);
                       setTimeout(() => { saveShadowOptions(); process.exit(); }, 1000);
                     } else {
                       interface.state = 'done';
