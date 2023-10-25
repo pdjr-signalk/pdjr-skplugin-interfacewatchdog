@@ -199,7 +199,7 @@ module.exports = function(app) {
   plugin.stop = function() {
   }
 
-  saveShadowOptions = function() {
+  function saveShadowOptions() {
     var shadowStuff = plugin.options.interfaces.map(interface => ({ restartCount: interface.restartCount }));
     fs.writeFileSync(plugin.shadowOptionsFilename, JSON.stringify(shadowStuff));
   }
