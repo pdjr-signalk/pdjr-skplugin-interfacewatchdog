@@ -161,6 +161,7 @@ module.exports = function(app) {
                 switch (interface.action) {
                   case 'restart-server':
                     interface.restartCount = (interface.restartCount)?interface.restartCount++:1;
+                    console.log(">>>>>> %s", interface.restartCount);
                     app.debug(`${interface.name} restarting`);
                     log.W(`${interface.name} triggering server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
                     App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})` }, plugin.id);
