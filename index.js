@@ -160,10 +160,10 @@ module.exports = function(app) {
               case 'problem':
                 switch (interface.action) {
                   case 'restart-server':
-                    if (!interface.restartCount) interface.restartCount = 1; else interface.restartCount++;
+                    interface.restartCount = (interface.restartCount)?interface.restartCount++:1;
                     app.debug(`${interface.name} restarting`);
                     log.W(`${interface.name} triggering server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
-                    App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.actionThreshold - interface.problemCount} of ${interface.actionThreshold - interface.problemThreshold})` }, plugin.id);
+                    App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})` }, plugin.id);
                     setTimeout(() => {
                       fs.writeFileSync(shadowOptionsFilename, JSON.stringify(plugin.options));
                       process.exit();
