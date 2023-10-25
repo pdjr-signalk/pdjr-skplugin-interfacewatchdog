@@ -138,8 +138,8 @@ module.exports = function(app) {
 
             if (throughput <= interface.threshold) {
               scratchData.problemCount++;
-              if (scratchData.problemCount == interface.problemThreshold) scratchData.state = 'problem';
-              if (scratchData.problemCount == interface.actionThreshold) scratchData.state = 'done'
+              if (scratchData.problemCount >= interface.problemThreshold) scratchData.state = 'problem';
+              if (scratchData.problemCount >= interface.actionThreshold) scratchData.state = 'done'
             } else {
               if (scratchData.state != 'normal') scratchData.state = 'newly-normal';
               scratchData.problemCount = 0;
