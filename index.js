@@ -162,7 +162,10 @@ module.exports = function(app) {
                     app.debug(`${interface.name} restarting`);
                     log.W(`${interface.name} triggering server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})`, false);
                     App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})` }, plugin.id);
-                    setTimeout(() => { process.exit(); }, 1000);
+                    setTimeout(() => {
+                      fs.writeFile(shadowOptionsFilename, JSON.stringify(plugin.options));
+                      process.exit();
+                    }, 1000);
                     break;
                   case 'kill-watchdog':
                     interface.state = 'done';
