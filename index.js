@@ -66,7 +66,7 @@ const PLUGIN_SCHEMA = {
         "required": [ "interface" ],
         "default": { 
           "threshold": 0,
-          "problemThreshold": 2,
+          "problemThreshold": 3,
           "actionThreshold": 3,
           "action": "none"
         }
@@ -142,10 +142,10 @@ module.exports = function(app) {
             if (throughput <= interface.threshold) {
               scratchData.state = 'problem';
               scratchData.problemCount++;
-              if (scratchData.problemCount >= interface.problemThreshold) {
+              if (scratchData.problemCount > interface.problemThreshold) {
                 scratchData.actionCount++;
                 scratchData.state = 'action';
-                if (scratchData.actionCount >= scratchData.actionThreshold) {
+                if (scratchData.actionCount > scratchData.actionThreshold) {
                   scratchData.state = 'done'
                 }
               }
