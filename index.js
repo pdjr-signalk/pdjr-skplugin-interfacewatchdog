@@ -56,7 +56,7 @@ const PLUGIN_SCHEMA = {
           "action": {
             "title": "Action to take",
             "type": "string",
-            "enum": [ "none", "stop", "restart" ]
+            "enum": [ "none", "kill-watchdog", "restart-server" ]
           },
           "notificationPath": {
             "title": "Notification path",
@@ -138,8 +138,8 @@ module.exports = function(app) {
 
             if (throughput <= interface.threshold) {
               scratchData.problemCount++;
-              if (scratchData.problemCount > interface.problemThreshold) scratchData.state = 'problem';
-              if (scratchData.problemCount > interface.actionThreshold) scratchData.state = 'done'
+              if (scratchData.problemCount == interface.problemThreshold) scratchData.state = 'problem';
+              if (scratchData.problemCount == interface.actionThreshold) scratchData.state = 'done'
             } else {
               if (scratchData.state != 'normal') scratchData.state = 'newly-normal';
               scratchData.problemCount = 0;
@@ -160,17 +160,14 @@ module.exports = function(app) {
                 break;
               case 'problem':
                 switch (interface.action) {
-                  case 'restart':
+                  case 'restart-server':
                     app.debug(`${interface.name} restarting`);
                     log.W(`${interface.name} triggering server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})`, false);
                     App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})` }, plugin.id);
                     setTimeout(() => { process.exit(); }, 1000);
                     break;
-                  case 'stop':
-                    app.debug(`${interface.name} terminating watchdog`);
-                    log.W(`${interface.name}' terminating watchdog`, false);
-                    App.notify(interface.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
-                    plugin.options.interfaces.slice(i, 1);  
+                  case 'kill-watchdog':
+                    scratchData.state = 'done';
                     break;
                   default:
                     break;
