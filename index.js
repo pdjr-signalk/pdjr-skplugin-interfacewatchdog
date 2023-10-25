@@ -18,6 +18,7 @@ const fs = require('fs');
 
 const myApp = require('./lib/signalk-libapp/App.js');
 const Log = require('./lib/signalk-liblog/Log.js');
+const internal = require('stream');
 
 const PLUGIN_ID = "interfacewatchdog";
 const PLUGIN_NAME = "Interface activity watchdog";
@@ -44,17 +45,18 @@ const PLUGIN_SCHEMA = {
             "title": "Activity threshold in deltas/s",
             "type": "number"
           },
-          "waitForActivity": {
-            "title": "Wait this number of cycles for activity",
+          "problemThreshold": {
+            "title": "Wait this number of cycles before flagging a problem",
             "type": "number"
           },
-          "restartLimit": {
-            "title": "Maximum number of restart attempts",
+          "actionThreshold": {
+            "title": "Wait this number of cycles before taking action",
             "type": "number"
           },
-          "stopWatching": {
-            "title": "Stop watching if reboot fails or is disabled",
-            "type": "boolean"
+          "action": {
+            "title": "Action to take",
+            "type": "string",
+            "enum": [ "none", "stop", "restart" ]
           },
           "notificationPath": {
             "title": "Notification path",
@@ -64,9 +66,9 @@ const PLUGIN_SCHEMA = {
         "required": [ "interface" ],
         "default": { 
           "threshold": 0,
-          "waitForActivity": 2,
-          "restartLimit": 3,
-          "stopWatching": true
+          "problemThreshold": 2,
+          "actionThreshold": 3,
+          "action": "none"
         }
       }
     }
@@ -95,26 +97,22 @@ module.exports = function(app) {
     plugin.options.interfaces =
       options.interfaces
       .map(interface => ({ ...plugin.schema.properties.interfaces.items.default, ...{ name: interface.interface, notificationPath: `notifications.plugin.${plugin.id}.interfaces.${interface.name}` },  ...interface }))
-      .filter(interface => (interface.waitForActivity != 0));
+      .filter(interface => (interface.problemThreshold != 0));
 
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     // Get scratchData persisted over restarts
     plugin.scratchFile = require('path').join( app.getDataDirPath(), plugin.id + '.json');
-    try { plugin.scratchData = require(plugin.scratchFile); } catch(e) { plugin.scratchData = {}; }
+    try { plugin.scratchData = require(plugin.scratchFile); } catch(e) { plugin.scratchData = { "dirty": false }; }
     plugin.options.interfaces.forEach(interface => {
-      if (!plugin.scratchData[interface.name]) {
-        plugin.scratchData[interface.name] = { notified: 0, activeCount: 0, inactiveCount: 0, restartCount: 0 }
-      } else {
-        plugin.scratchData[interface.name] = { ...plugin.scratchData[interface.name], ...{ notified: 0, activeCount: 0, inactiveCount: 0 } }
-      }
+        plugin.scratchData[interface.name] = { ...{ problemCount: 0, actionCount: 0, state: '' }, ...plugin.scratchData[interface.name] }
     });
 
     // If we have some enabled interfaces then go into production.
     if (plugin.options.interfaces.length > 0) {
 
       // Report plugin status to dashboard and notify on each interface.
-      log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${plugin.options.interfaces.map(interface => (interface.name  + ((interface.restart)?'('+ ((interface.scratchpad.restartCount > 0)?'R':'r') + ')':''))).join(', ')}`);
+      log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${plugin.options.interfaces.map(interface => (interface.name  + ((interface.actionCount != 0)?'('+ ((interface.scratchpad.restartCount > 0)?'R':'r') + ')':''))).join(', ')}`);
       plugin.options.interfaces.forEach(interface => {
         App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Waiting for interface to become active' }, plugin.id);
       });  
@@ -122,7 +120,7 @@ module.exports = function(app) {
       // Register as a serverevent recipient.
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
-          // Get throughput statistics for all configured interfaces
+          // Get throughput statistics for all configured interface
           const interfaceThroughputs =
             Object.keys(e.data.providerStatistics)
             .filter(key => plugin.options.interfaces.map(interface => interface.interface).includes(key))
@@ -135,48 +133,54 @@ module.exports = function(app) {
             var scratchData = plugin.scratchData[interface.name];
             var throughput = (interfaceThroughputs[interface.interface])?interfaceThroughputs[interface.interface]:0;
 
-            console.log(">>>>> %s", throughput);
-
-            if (throughput > 0) { cratchData.activeCount++; } else { scratchData.inactiveCount++; }
-
-            console.log(">>>> %s", scratchData.activeCount);
-
-            if (scratchData.activeCount == 1) {
+            if ((throughput > 0) && (scratchData.notificationState == 'waiting')) {
+              scratchData.notificationState = 'alive';
               log.N(`interface '${interface.name}' is alive`);
               App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface is alive' }, plugin.id);
             }
 
             if (throughput <= interface.threshold) {
-              if (scratchData.inactiveCount == interface.waitForActivity) {
-                // We've waited long enough: either enter reboot cycle or disable
-                if (interface.restartLimit != 0) {
-                  if ((scratchData.restartCount < interface.restartLimit)) {
-                    log.W(`interface '${interface.name}' ${(interface.activeCount)?' throughput is below threshold':'has not started'}: restarting system (attempt ${++scratchData.restartCount} of ${interface.restartLimit})`, false);
-                    if (scratchData.notified == 1) {
-                      App.notify(interface.notificationPath, { state: 'alert', method: [], message: 'Reboot recovery process started' }, plugin.id);
-                      scratchData.notified = 2;
-                    }
-                    fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
-                    setTimeout(() => { process.exit(); }, 1000);
-                  }
-                } else {
-                  if (plugin.options.stopWatching) {
-                    log.W(`interface '${interface.name}' ${(interface.activeCount)?'has persistent low throughput':'has not started'} stopping watching`, false);
-                    App.notify(interface.notificationPath, { state: 'warn', method: [], message: 'Interface is dead)' }, plugin.id);
-                    scratchData.restartCount = 0;
-                    fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
-                    plugin.options.interfaces.splice(i, 1);
-                  }
+              scratchData.state = 'problem';
+              scratchData.problemCount++;
+              if (scratchData.problemCount >= interface.problemThreshold) {
+                scratchData.actionCount++;
+                scratchData.state = 'action';
+                if (scratchData.actionCount >= scratchData.actionThreshold) {
+                  scratchData.state = 'done'
                 }
-              }         
-            } else {
-              if (scratchData.notified == 2) {
-                log.N(`interface '${interface.name}' throughput is above threshold`, false);
-                App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Interface throughput is normal' }, plugin.id);
-                scratchData.activeCount = scratchData.inactiveCount = scratchData.restartCount = 0;
-                scratchData.notified = 1;
-                fs.writeFileSync(plugin.scratchFile, JSON.stringify(plugin.scratchData));
               }
+            } else {
+              if (scratchData.state != 'normal') scratchData.state = 'newly-normal';
+              scratchData.problemCount = scratchData.actionCount = 0;
+            }
+
+            console.log("CHANNEL %s is %s", interface.name, scratchData.state);
+
+            switch (scratchData.state) {
+              case 'newly-normal':
+                Log.W(`${interface.name} entered normal operation`, false);
+                App.notify(interface.notificationPath, { state: 'normal', method: [], message: `${interface.name} entered normal operation` }, plugin.id);
+                scratchData.state = 'normal'
+                break;
+              case 'normal':
+                break;
+              case 'problem':
+                break;
+              case 'action':
+                if (interface.action == 'restart') {
+                  Log.W(`${interface.name} triggering server restart (${scratchData.actionCount} of ${interface.actionThreshold})`, false);
+                  App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionCount} of ${interface.actionThreshold}')`, plugin.id);
+                  setTimeout(() => { process.exit(); }, 1000);
+                }
+                break;
+              case 'done':
+                if (interface.action = 'stop') {
+                  log.W(`${interface.name}' has persistent low throughput so discontinuing watchdog`, false);
+                  App.notify(interface.notificationPath, { state: 'warn', method: [], message: `${interface.name}' has persistent low throughput so discontinuing watchdog` });
+                  plugin.options.interfaces.slice(i, 1);
+                }
+                scratchData.state = 'normal';
+                break;
             }
           }
         }
@@ -187,6 +191,11 @@ module.exports = function(app) {
   }
 
   plugin.stop = function() {
+  }
+
+  updateScratchData(interface, options) {
+    plugin.scratchData.dirty = true;
+    plugin.scratchData[interface.name] = { ...plugin.scratchData[interface.name], ...{options} };
   }
 
   return(plugin);
