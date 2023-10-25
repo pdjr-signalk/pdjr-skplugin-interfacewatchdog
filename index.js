@@ -86,7 +86,7 @@ module.exports = function(app) {
   plugin.schema = PLUGIN_SCHEMA;
   plugin.uiSchema = PLUGIN_UISCHEMA;
 
-  const App = new myApp(app);
+  const App = new myApp(app, plugin.id);
   const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
   
   plugin.start = function(options) {
