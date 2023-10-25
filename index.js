@@ -114,6 +114,7 @@ module.exports = function(app) {
       // Report plugin status to dashboard and notify on each interface.
       log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${plugin.options.interfaces.map(interface => (interface.name)).join(', ')}`);
       plugin.options.interfaces.forEach(interface => {
+        app.debug(`waiting for ${interface.name} to become active`);
         App.notify(interface.notificationPath, { state: 'normal', method: [], message: 'Waiting for interface to become active' }, plugin.id);
       });  
 
