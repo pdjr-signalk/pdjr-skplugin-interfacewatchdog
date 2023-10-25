@@ -59,6 +59,13 @@ which configures watchdog behaviour for a single Signal K interface.
     The supplied value must be greater than *startActionThreshold*.
     Defaults to 6.
   </dd>
+  <dt>Action to take? <code>action</code></dt>
+  <dd>
+  The action to take on each problem event between
+  <code>startActionThreshold</code> and <code>stopActionThreshold</code>.
+  Must be one of 'none', 'kill-watchdog' or 'restart-server'.
+  Defaults to 'kill-watchdog'.
+  </dd>
   <dt>Notification path <code>notificationPath</code></dt>
   <dd>
     Optional path under 'vessels.self.' on which the plugin should issue
@@ -68,9 +75,9 @@ which configures watchdog behaviour for a single Signal K interface.
   </dd>
 </dl>
 
-There is no restriction on the number of times a named interface can
-occur in the *Interfaces* array, although it only makes sense if one
-entry triggers a reboot.
+There is no restriction on the number of times an interface can
+occur in the *Interfaces* array so long as each watchdog has a unique
+name (although it only makes sense if one watchdog triggers a reboot).
 My ship has two NMEA busses bridged to a single interface and careful
 setting of *threshold* on two *Interface* configurations allows me to
 monitor the presence/absence of both data streams.
