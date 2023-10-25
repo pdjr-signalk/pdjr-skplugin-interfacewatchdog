@@ -154,11 +154,11 @@ module.exports = function(app) {
               scratchData.problemCount = scratchData.actionCount = 0;
             }
 
-            console.log("CHANNEL %s is %s", interface.name, scratchData.state);
+            console.log("CHANNEL %s state %s", interface.name, scratchData.state);
 
             switch (scratchData.state) {
               case 'newly-normal':
-                Log.W(`${interface.name} entered normal operation`, false);
+                log.W(`${interface.name} entered normal operation`, false);
                 App.notify(interface.notificationPath, { state: 'normal', method: [], message: `${interface.name} entered normal operation` }, plugin.id);
                 scratchData.state = 'normal'
                 break;
@@ -168,7 +168,7 @@ module.exports = function(app) {
                 break;
               case 'action':
                 if (interface.action == 'restart') {
-                  Log.W(`${interface.name} triggering server restart (${scratchData.actionCount} of ${interface.actionThreshold})`, false);
+                  log.W(`${interface.name} triggering server restart (${scratchData.actionCount} of ${interface.actionThreshold})`, false);
                   App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionCount} of ${interface.actionThreshold}')` }, plugin.id);
                   setTimeout(() => { process.exit(); }, 1000);
                 }
