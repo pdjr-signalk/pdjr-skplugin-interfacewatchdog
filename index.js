@@ -15,6 +15,7 @@
  */
 
 const fs = require('fs');
+const _ = require('lodash');
 
 const myApp = require('./lib/signalk-libapp/App.js');
 const Log = require('./lib/signalk-liblog/Log.js');
@@ -113,8 +114,8 @@ module.exports = function(app) {
     if (plugin.options.interfaces.length > 0) {
 
       // Report plugin status to dashboard and notify on each interface.
-      var dbMessage = plugin.options.interfaces
-      .reduce((a,i) => { if (a.includes(i.interface)) return(a); else return(a.push(i.interface)); }, [])
+      var is = _.sortedUniq(plugin.options.interfaces.map(i => (i.interface)));
+      var dbMessage = is
       .map(i => { i + '[' + plugin.options.interfaces.filter(ii => (ii.interface == i)).map(ii => (ii.name)).sort().join(',') + ']'})
       .sort().join(', ');
 
