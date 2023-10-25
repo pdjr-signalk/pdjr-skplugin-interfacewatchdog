@@ -156,6 +156,7 @@ module.exports = function(app) {
                 break;
               case 'problem':
                 if (interface.action == 'restart') {
+                  app.debug(`${interface.name} restarting`);
                   log.W(`${interface.name} triggering server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})`, false);
                   App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${scratchData.actionThreshold - interface.problemCount} of ${scratchData.actionThreshold - scratchData.problemThreshold})` }, plugin.id);
                   setTimeout(() => { process.exit(); }, 1000);
