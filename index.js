@@ -116,9 +116,8 @@ module.exports = function(app) {
       // Report plugin status to dashboard and notify on each interface.
       var is = _.sortedUniq(plugin.options.interfaces.map(i => (i.interface)));
       console.log(is);
-      var dbMessage = is
-      .map(i => { i + '[' + plugin.options.interfaces.filter(ii => (ii.interface == i)).map(ii => (ii.name)).sort().join(',') + ']'})
-      .sort().join(', ');
+      var dbMessage = is.map(i => { i + '[' + plugin.options.interfaces.filter(ii => (ii.interface == i)).map(ii => (ii.name)).sort().join(',') + ']'});
+      
 
       log.N(`watching interface${(plugin.options.interfaces.length == 1)?'':'s'} ${dbMessage}`);
       plugin.options.interfaces.forEach(interface => {
