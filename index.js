@@ -126,7 +126,7 @@ module.exports = function(app) {
             Object.keys(e.data.providerStatistics)
             .filter(key => plugin.options.interfaces.map(interface => interface.interface).includes(key))
             .reduce((a,key) => { a[key] = e.data.providerStatistics[key].deltaRate; return(a); }, {});
-          app.debug(`interface throughputs: ${JSON.stringify(interfaceThroughputs)}`)
+          //app.debug(`interface throughputs: ${JSON.stringify(interfaceThroughputs)}`)
 
           // Iterate over configured interfaces.
           for (var i = plugin.options.interfaces.length - 1; i >= 0; i--) {
@@ -145,7 +145,7 @@ module.exports = function(app) {
               scratchData.problemCount = 0;
             }
 
-            console.log("CHANNEL %s state %s, problem count %s", interface.name, scratchData.state, scratchData.problemCount);
+            //console.log("CHANNEL %s state %s, problem count %s", interface.name, scratchData.state, scratchData.problemCount);
 
             switch (scratchData.state) {
               case 'waiting':
