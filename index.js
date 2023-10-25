@@ -139,7 +139,6 @@ module.exports = function(app) {
             if (throughput <= interface.threshold) {
               interface.problemCount++;
               if (interface.problemCount == interface.problemThreshold) interface.state = 'problem';
-              if (interface.problemCount == interface.actionThreshold) interface.state = 'done'
             } else {
               if (interface.state != 'normal') interface.state = 'newly-normal';
               interface.problemCount = 0;
@@ -162,15 +161,16 @@ module.exports = function(app) {
               case 'problem':
                 switch (interface.action) {
                   case 'restart-server':
-                    interface.restartCount = (interface.restartCount)?(interface.restartCount + 1):1;
-                    console.log(">>>>>> %s", interface.restartCount);
-                    app.debug(`${interface.name} restarting`);
-                    log.W(`${interface.name} triggering server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
-                    App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})` }, plugin.id);
-                    setTimeout(() => {
-                      saveShadowOptions();
-                      process.exit();
-                    }, 1000);
+                    if ((!interface.restartCount) || (interface.restartCount < (interfaceActionThreshold - interfaceProblemThreshold))) {
+                      interface.restartCount = (interface.restartCount)?(interface.restartCount + 1):1;
+                      console.log(">>>>>> %s", interface.restartCount);
+                      app.debug(`${interface.name} restarting`);
+                      log.W(`${interface.name} triggering server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})`, false);
+                      App.notify(interface.notificationPath, { state: 'alert', method: [], message: `Server restart (${interface.restartCount} of ${interface.actionThreshold - interface.problemThreshold})` }, plugin.id);
+                      setTimeout(() => { saveShadowOptions(); process.exit(); }, 1000);
+                    } else {
+                      interface.state = 'done';
+                    }
                     break;
                   case 'kill-watchdog':
                     interface.state = 'done';
