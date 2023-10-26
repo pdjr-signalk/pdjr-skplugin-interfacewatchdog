@@ -122,6 +122,8 @@ module.exports = function(app) {
       return(combinedState);
     });
 
+    plugin.heartbeat = 0;
+
     plugin.options.watchdogs.forEach(watchdog => { changeState(watchdog, 'starting'); });
     
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
@@ -142,6 +144,7 @@ module.exports = function(app) {
       // processing happens in the event handler.
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
+          plugin.heartbeat++;
 
           // Get system throughput statistic for all interfaces that
           // are associated with a watchdog.
@@ -234,7 +237,7 @@ module.exports = function(app) {
 
   function changeState(watchdog, state) {
     watchdog.state = state;
-    watchdog.stateHistory.push(state);
+    watchdog.stateHistory.push({ state: state, heartbeat: plugin.heartbeat });
   }
 
   function saveShadowOptions() {
