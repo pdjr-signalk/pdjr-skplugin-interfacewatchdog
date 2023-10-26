@@ -113,12 +113,14 @@ module.exports = function(app) {
     }
     plugin.options.watchdogs = plugin.options.watchdogs.map(watchdog => {
       var shadowwatchdog = shadowOptions.watchdogs.reduce((a,i) => ((i.name == watchdog.name)?i:a), {});
-      return({
+      var combinedState = {
         ...{ problemsSinceFileCreation: 0 },
         ...shadowwatchdog,
-        ...{ problemCount: 0, problemsSinceLastRestart: 0, state: 'waiting' },
+        ...{ problemCount: 0, problemsSinceLastRestart: 0, stateHistory: [] 'waiting'},
         ...watchdog
-      });    
+      };
+      changeState(watchdog, 'waiting');
+      return(combinedState);
     });
 
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
@@ -160,7 +162,7 @@ module.exports = function(app) {
               watchdog.problemCount++;
               watchdog.problemsSinceLastRestart++;
               watchdog.problemsSinceFileCreation++;
-              if (watchdog.problemCount == watchdog.startActionThreshold) watchdog.state = 'problem';
+              if (watchdog.problemCount == watchdog.startActionThreshold) changeState(watchdog, 'problem');
             } else {
               watchdog.problemCount = 0;
               if (watchdog.state != 'normal') watchdog.state = 'newly-normal';
@@ -175,7 +177,7 @@ module.exports = function(app) {
               case 'newly-normal':
                 app.debug(`${watchdog.name} on ${watchdog.interface} started normal operation`, false);
                 App.notify(watchdog.notificationPath, { state: 'normal', method: [], message: `Started normal operation` }, plugin.id);
-                watchdog.state = 'normal';
+                changeState(watchdog, 'normal');
                 delete watchdog.restartCount;
                 break;
               case 'normal':
@@ -189,11 +191,11 @@ module.exports = function(app) {
                       App.notify(watchdog.notificationPath, { state: 'alarm', method: [], message: `Server restart (${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold})` }, plugin.id);
                       setTimeout(() => { saveShadowOptions(); process.exit(); }, 1000);
                     } else {
-                      watchdog.state = 'done';
+                      changeState(watchdog, 'done');
                     }
                     break;
                   case 'kill-watchdog':
-                    watchdog.state = 'done';
+                    changeState(watchdog, 'done');
                     break;
                   default:
                     break;
@@ -226,6 +228,11 @@ module.exports = function(app) {
     require("./resources/openApi.json");
   }
 
+  function changeState(watchdog, state) {
+    watchdog.state = state;
+    watchdog.stateHistory.push(state);
+  }
+
   function saveShadowOptions() {
     var shadowStuff = {
       watchdogs: plugin.options.watchdogs.map(watchdog => ({ name: watchdog.name, problemsSinceFileCreation: watchdog.problemsSinceFileCreation, problemsInLastSession: watchdog.problemsSinceLastRestart, restartCount: watchdog.restartCount }))
@@ -245,6 +252,7 @@ module.exports = function(app) {
           const status = plugin.options.watchdogs.reduce((a,watchdog) => {
             a[watchdog.name] = {
               currentState: watchdog.state,
+              stateHistory: watchdog.stateHistory,
               problemCount: watchdog.problemsSinceLastRestart
             }
             return(a);
