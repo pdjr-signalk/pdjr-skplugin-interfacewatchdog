@@ -1,0 +1,54 @@
+openapi: 3.0.3
+info:
+  title: HTTP API for pdjr-skplugin-interfacewatchdog
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  description: |
+    [pdjr-skplugin-interfacewatchdog](https://github.com/pdjr-signalk/pdjr-skplugin-interfacewatchdog)
+    is a plugin for the
+    [Signal K node server](https://github.com/SignalK/signalk-server).
+
+    A Signal K server hosting the plugin will present this API under
+    the root https://*server_ip*:*server_port*/plugins/interfacewatchdog.
+externalDocs:
+  description: Plugin README document
+  url: https://github.com/pdjr-signalk/pdjr-skplugin-interfacewatchdog#readme 
+paths:
+  /status:
+    get:
+      description: |
+        Get a digest of reporting the status of all currently active
+        watchdogs.
+      responses:
+        200:
+          description: |
+            Success.
+            The response body is an object containing status property 
+            objects for each watchdog keyed by watchdog name.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  additionalProperties:
+                    type: object
+                    properties:
+                      currentState:
+                        description: The current state of this watchdog.
+                        type: string
+                      stateHistory:
+                        description: Time-sequenced array of states adopted by the watchdog.
+                        type: array
+                        items:
+                          description: State Identifier
+                          type: string
+                      problemCount:
+                        description: No of problems recorded by this watchdog since last restart.
+                        type: number
+                        minimum: 0
+        500:
+          description: |
+            Error.
+            The server was unable to service the request.       

@@ -1,0 +1,62 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "HTTP API for pdjr-skplugin-interfacewatchdog",
+    "version": "1.0.0",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "description": "[pdjr-skplugin-interfacewatchdog](https://github.com/pdjr-signalk/pdjr-skplugin-interfacewatchdog)\nis a plugin for the\n[Signal K node server](https://github.com/SignalK/signalk-server).\n\nA Signal K server hosting the plugin will present this API under\nthe root https://*server_ip*:*server_port*/plugins/interfacewatchdog.\n"
+  },
+  "externalDocs": {
+    "description": "Plugin README document",
+    "url": "https://github.com/pdjr-signalk/pdjr-skplugin-interfacewatchdog#readme"
+  },
+  "paths": {
+    "/status": {
+      "get": {
+        "description": "Get a digest of reporting the status of all currently active\nwatchdogs.\n",
+        "responses": {
+          "200": {
+            "description": "Success.\nThe response body is an object containing status property \nobjects for each watchdog keyed by watchdog name.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "currentState": {
+                          "description": "The current state of this watchdog.",
+                          "type": "string"
+                        },
+                        "stateHistory": {
+                          "description": "Time-sequenced array of states adopted by the watchdog.",
+                          "type": "array",
+                          "items": {
+                            "description": "State Identifier",
+                            "type": "string"
+                          }
+                        },
+                        "problemCount": {
+                          "description": "No of problems recorded by this watchdog since last restart.",
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error.\nThe server was unable to service the request.       \n"
+          }
+        }
+      }
+    }
+  }
+}

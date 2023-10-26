@@ -218,6 +218,14 @@ module.exports = function(app) {
     saveShadowOptions();
   }
 
+  plugin.registerWithRouter = function(router) {
+    router.get('/status', handleRoutes);
+  }
+
+  plugin.getOpenApi = function() {
+    require("./resources/openApi.json");
+  }
+
   function saveShadowOptions() {
     var shadowStuff = {
       watchdogs: plugin.options.watchdogs.map(watchdog => ({ name: watchdog.name, problemsSinceFileCreation: watchdog.problemsSinceFileCreation, problemsInLastSession: watchdog.problemsSinceLastRestart, restartCount: watchdog.restartCount }))
@@ -225,5 +233,37 @@ module.exports = function(app) {
     fs.writeFileSync(plugin.shadowOptionsFilename, JSON.stringify(shadowStuff));
   }
 
+  /********************************************************************
+   * EXPRESS ROUTE HANDLING
+   */
+
+  function handleRoutes(req, res) {
+    app.debug("processing %s request on %s", req.method, req.path);
+    try {
+      switch (req.path.slice(0, (req.path.indexOf('/', 1) == -1)?undefined:req.path.indexOf('/', 1))) {
+        case '/status':
+          const status = plugin.options.watchdogs.reduce((a,watchdog) => {
+            a[watchdog.name] = {
+              currentState: watchdog.state,
+              problemCount: watchdog.problemsSinceLastRestart
+            }
+            return(a);
+          },{}); 
+          expressSend(res, 200, status, req.path);
+          break;
+      }
+    } catch(e) {
+      app.debug(e.message);
+      expressSend(res, ((/^\d+$/.test(e.message))?parseInt(e.message):500), null, req.path);
+    }
+  
+    function expressSend(res, code, body = null, debugPrefix = null) {
+      const FETCH_RESPONSES = { 200: null, 201: null, 400: "bad request", 403: "forbidden", 404: "not found", 503: "service unavailable (try again later)", 500: "internal server error" };
+      res.status(code).send((body)?body:((FETCH_RESPONSES[code])?FETCH_RESPONSES[code]:null));
+      if (debugPrefix) app.debug("%s: %d %s", debugPrefix, code, ((body)?JSON.stringify(body):((FETCH_RESPONSES[code])?FETCH_RESPONSES[code]:null)));
+      return(false);
+    }
+  }
+  
   return(plugin);
 }
