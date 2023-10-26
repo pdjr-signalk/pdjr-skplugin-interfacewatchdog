@@ -116,7 +116,7 @@ module.exports = function(app) {
       var combinedState = {
         ...{ problemsSinceFileCreation: 0 },
         ...shadowwatchdog,
-        ...{ problemCount: 0, problemsSinceLastRestart: 0, stateHistory: [] 'waiting'},
+        ...{ problemCount: 0, problemsSinceLastRestart: 0, stateHistory: [] },
         ...watchdog
       };
       changeState(watchdog, 'waiting');
