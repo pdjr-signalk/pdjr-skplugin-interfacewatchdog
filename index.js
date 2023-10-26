@@ -260,7 +260,7 @@ module.exports = function(app) {
             a[watchdog.name] = {
               currentState: watchdog.state,
               stateHistory: watchdog.stateHistory,
-              problemCount: watchdog.problems
+              problemCount: watchdog.problemCount
             }
             return(a);
           },{}); 
