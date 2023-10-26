@@ -32,22 +32,25 @@ paths:
               schema:
                 type: object
                 properties:
-                  additionalProperties:
+                  Bus0:
                     type: object
                     properties:
                       currentState:
                         description: The current state of this watchdog.
                         type: string
+                        example: normal
+                      exceptionRate:
+                        description: Real-time "*exceptionCount* / *heartbeat*" for this watchdog.
+                        type: string
+                        example: 0 / 156
                       stateHistory:
-                        description: Time-sequenced array of states adopted by the watchdog.
+                        description: Time-sequenced array of states adopted by this watchdog.
                         type: array
                         items:
-                          description: State Identifier
+                          description: |
+                            String of the form "*time* *heartbeat* *exceptionCount* *state*".
                           type: string
-                      problemCount:
-                        description: No of problems recorded by this watchdog since last restart.
-                        type: number
-                        minimum: 0
+                        example: [ 2023-10-26T14:05:53.453Z 0 0 starting, 2023-10-26T14:06:02.273Z 2 0 normal, ]
         500:
           description: |
             Error.
