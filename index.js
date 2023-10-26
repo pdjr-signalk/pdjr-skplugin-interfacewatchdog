@@ -259,7 +259,7 @@ module.exports = function(app) {
           const status = plugin.options.watchdogs.reduce((a,watchdog) => {
             a[watchdog.name] = {
               currentState: watchdog.state,
-              exceptionCount: watchdog.exceptionCount,
+              exceptionRate: (watchdog.exceptionCount / plugin.heartbeat) * 100,
               stateHistory: watchdog.stateHistory
             }
             return(a);
