@@ -20,6 +20,11 @@ If server restarting is configured, the maximum number of allowed
 restarts can be limited to prevent a persistent loss of service
 resulting from runaway reboots on a dead interface.
 
+The plugin exposes an
+[HTTP API](https://pdjr-signalk.github.io/pdjr-skplugin-interfacewatchdog/)
+and contributes OpenAPI documentation of its interface to the Signal
+K OpenAPI service.
+
 ## Configuration
 
 The plugin configuration consists of a *Watchdogs* array containing
