@@ -186,7 +186,6 @@ module.exports = function(app) {
                 break;
               case 'problem':
                 watchdog.problemCount++;
-                watchdog.problemsSinceLastRestart++;
                 watchdog.problemsSinceFileCreation++;  
                 switch (watchdog.action) {
                   case 'restart-server':
@@ -261,7 +260,7 @@ module.exports = function(app) {
             a[watchdog.name] = {
               currentState: watchdog.state,
               stateHistory: watchdog.stateHistory,
-              problemCount: watchdog.problemsSinceLastRestart
+              problemCount: watchdog.problems
             }
             return(a);
           },{}); 
@@ -279,6 +278,7 @@ module.exports = function(app) {
       if (debugPrefix) app.debug("%s: %d %s", debugPrefix, code, ((body)?JSON.stringify(body):((FETCH_RESPONSES[code])?FETCH_RESPONSES[code]:null)));
       return(false);
     }
+
   }
   
   return(plugin);
