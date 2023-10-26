@@ -106,10 +106,19 @@ module.exports = function(app) {
     // opportunity to initialise problemCount and state.
     plugin.shadowOptionsFilename = require('path').join( app.getDataDirPath(), 'shadow-options.json');
     var shadowOptions; 
-    try { shadowOptions = require(plugin.shadowOptionsFilename); } catch(e) { shadowOptions = { watchdogs: [] }; }
+    try {
+      shadowOptions = require(plugin.shadowOptionsFilename);
+    } catch(e) {
+      shadowOptions = { fileCreated: new Date().toString(), watchdogs: [] };
+    }
     plugin.options.watchdogs = plugin.options.watchdogs.map(watchdog => {
       var shadowwatchdog = shadowOptions.watchdogs.reduce((a,i) => ((i.name == watchdog.name)?i:a), {});
-      return({ ...{ problemCount: 0, problemsSinceLastRestart: 0, state: 'waiting' }, ...shadowwatchdog, ...watchdog });    
+      return({
+        ...{ problemsSinceFileCreation: 0 },
+        ...shadowwatchdog,
+        ...{ problemCount: 0, problemsSinceLastRestart: 0, state: 'waiting' },
+        ...watchdog
+      });    
     });
 
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
@@ -150,6 +159,7 @@ module.exports = function(app) {
             if (throughput <= watchdog.threshold) {
               watchdog.problemCount++;
               watchdog.problemsSinceLastRestart++;
+              watchdog.problemsSinceFileCreation++;
               if (watchdog.problemCount == watchdog.startActionThreshold) watchdog.state = 'problem';
             } else {
               watchdog.problemCount = 0;
@@ -210,7 +220,7 @@ module.exports = function(app) {
 
   function saveShadowOptions() {
     var shadowStuff = {
-      watchdogs: plugin.options.watchdogs.map(watchdog => ({ name: watchdog.name, problemsSinceLastRestart: watchdog.problemsSinceLastRestart, restartCount: watchdog.restartCount }))
+      watchdogs: plugin.options.watchdogs.map(watchdog => ({ name: watchdog.name, problemsSinceFileCreation: watchdog.problemsSinceFileCreation, problemsInLastSession: watchdog.problemsSinceLastRestart, restartCount: watchdog.restartCount }))
     };
     fs.writeFileSync(plugin.shadowOptionsFilename, JSON.stringify(shadowStuff));
   }
