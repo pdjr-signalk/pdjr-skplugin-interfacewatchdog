@@ -237,7 +237,7 @@ module.exports = function(app) {
 
   function changeState(watchdog, state) {
     watchdog.state = state;
-    watchdog.stateHistory.push(Date().toString('YYYY-MM-DDTHH:mm:ss') + state);
+    watchdog.stateHistory.push(Date().toISOString('YYYY-MM-DDTHH:mm:ss') + state);
   }
 
   function saveShadowOptions() {
