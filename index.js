@@ -109,7 +109,7 @@ module.exports = function(app) {
     try { shadowOptions = require(plugin.shadowOptionsFilename); } catch(e) { shadowOptions = { watchdogs: [] }; }
     plugin.options.watchdogs = plugin.options.watchdogs.map(watchdog => {
       var shadowwatchdog = shadowOptions.watchdogs.reduce((a,i) => ((i.name == watchdog.name)?i:a), {});
-      return({ ...{ problemCount: 0, state: 'waiting' }, ...shadowwatchdog, ...watchdog });    
+      return({ ...{ problemCount: 0, problemsSinceLastRestart: 0, state: 'waiting' }, ...shadowwatchdog, ...watchdog });    
     });
 
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
@@ -149,6 +149,7 @@ module.exports = function(app) {
             // or to 'newly-normal' when a problem first disappears.
             if (throughput <= watchdog.threshold) {
               watchdog.problemCount++;
+              watchdog.problemsSinceLastRestart++;
               if (watchdog.problemCount == watchdog.startActionThreshold) watchdog.state = 'problem';
             } else {
               watchdog.problemCount = 0;
@@ -192,7 +193,6 @@ module.exports = function(app) {
                 app.debug(`terminating watchdog on ${watchdog.name} on ${watchdog.interface}`, false);
                 App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
                 delete watchdog.restartCount;
-                saveShadowOptions();
                 plugin.options.watchdogs.splice(i, 1);
                 break;
             }
@@ -205,11 +205,12 @@ module.exports = function(app) {
   }
 
   plugin.stop = function() {
+    saveShadowOptions();
   }
 
   function saveShadowOptions() {
     var shadowStuff = {
-      watchdogs: plugin.options.watchdogs.map(watchdog => ({ name: watchdog.name, restartCount: watchdog.restartCount }))
+      watchdogs: plugin.options.watchdogs.map(watchdog => ({ name: watchdog.name, problemsSinceLastRestart: watchdog.problemsSinceLastRestart, restartCount: watchdog.restartCount }))
     };
     fs.writeFileSync(plugin.shadowOptionsFilename, JSON.stringify(shadowStuff));
   }
