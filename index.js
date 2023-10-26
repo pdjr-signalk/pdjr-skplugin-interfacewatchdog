@@ -119,10 +119,11 @@ module.exports = function(app) {
         ...{ problemCount: 0, problemsSinceLastRestart: 0, stateHistory: [] },
         ...watchdog
       };
-      changeState(watchdog, 'waiting');
       return(combinedState);
     });
 
+    plugin.options.watchdogs.forEach(watchdog => { changeState(watchdog, 'waiting'); });
+    
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     // If we have some enabled watchdogs then go into production.
