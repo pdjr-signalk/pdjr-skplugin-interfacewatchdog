@@ -101,9 +101,9 @@ module.exports = function(app) {
       .filter(watchdog => (watchdog.startActionThreshold != 0));
 
     // We might be starting up in the middle of a restart sequence,
-    // in which case a restartCount property will be being passed
+    // in which case a number of dynamic properties will be passed
     // forwards through the shadow options file. Also take this
-    // opportunity to initialise problemCount and state.
+    // opportunity to initialise various properties.
     plugin.shadowOptionsFilename = require('path').join( app.getDataDirPath(), 'shadow-options.json');
     var shadowOptions; 
     try {
@@ -122,8 +122,10 @@ module.exports = function(app) {
       return(combinedState);
     });
 
+    // Initialise a counter of the number of time a server event calls us.
     plugin.heartbeat = 0;
 
+    // Set the initial state of each watchdog.
     plugin.options.watchdogs.forEach(watchdog => { changeState(watchdog, 'starting'); });
     
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
@@ -161,7 +163,9 @@ module.exports = function(app) {
 
             // Count consecutive throughput exceptions and transition the
             // watchdog state to 'problem' if actionThreshold is reached
-            // or to 'newly-normal' when a non-exception occurs.
+            // or to 'newly-normal' when a non-exception occurs. We use
+            // newly-normal so that the state change can be logged once
+            // before the immediate transition to 'normal'.
             if (throughput <= watchdog.threshold) {
               watchdog.exceptionCount++;
               if ((watchdog.exceptionCount == watchdog.startActionThreshold) && (!watchdog.state.startsWith('stop'))) changeState(watchdog, 'problem');
@@ -234,11 +238,17 @@ module.exports = function(app) {
     require("./resources/openApi.json");
   }
 
+  /********************************************************************
+   * Change watchdog state and log state change to stateHistory. 
+   */
   function changeState(watchdog, state) {
     watchdog.state = state;
     watchdog.stateHistory.push(`${new Date().toISOString('YYYY-MM-DDTHH:mm:ss')} ${plugin.heartbeat} ${watchdog.exceptionCount} ${state}`);
   }
 
+  /********************************************************************
+   * Save persistent data to the shadowOptions file.
+   */
   function saveShadowOptions() {
     var shadowStuff = {
       fileCreated: plugin.options.fileCreated,
