@@ -116,7 +116,7 @@ module.exports = function(app) {
       var combinedState = {
         ...{ problemsSinceFileCreation: 0 },
         ...shadowwatchdog,
-        ...{ problemCount: 0, problemsSinceLastRestart: 0, stateHistory: [] },
+        ...{ exceptionCount: 0, problemCount: 0, problemsSinceLastRestart: 0, stateHistory: [] },
         ...watchdog
       };
       return(combinedState);
@@ -156,16 +156,14 @@ module.exports = function(app) {
             var watchdog = plugin.options.watchdogs[i];
             var throughput = (interfaceThroughputs[watchdog.interface])?interfaceThroughputs[watchdog.interface]:0;
 
-            // Count consecutive throughput problems and transition the
+            // Count consecutive throughput exceptions and transition the
             // watchdog state to 'problem' if actionThreshold is reached
-            // or to 'newly-normal' when a problem first disappears.
+            // or to 'newly-normal' when a non-exception occurs.
             if (throughput <= watchdog.threshold) {
-              watchdog.problemCount++;
-              watchdog.problemsSinceLastRestart++;
-              watchdog.problemsSinceFileCreation++;
-              if (watchdog.problemCount == watchdog.startActionThreshold) changeState(watchdog, 'problem');
+              watchdog.exceptionCount++;
+              if (watchdog.exceptionCount == watchdog.startActionThreshold) changeState(watchdog, 'problem');
             } else {
-              watchdog.problemCount = 0;
+              watchdog.exceptionCount = 0;
               if (watchdog.state != 'normal') watchdog.state = 'newly-normal';
             }
 
@@ -184,6 +182,9 @@ module.exports = function(app) {
               case 'normal':
                 break;
               case 'problem':
+                watchdog.problemCount++;
+                watchdog.problemsSinceLastRestart++;
+                watchdog.problemsSinceFileCreation++;  
                 switch (watchdog.action) {
                   case 'restart-server':
                     if ((!watchdog.restartCount) || (watchdog.restartCount < (watchdog.stopActionThreshold - watchdog.startActionThreshold))) {
