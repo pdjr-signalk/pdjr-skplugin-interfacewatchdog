@@ -161,7 +161,7 @@ module.exports = function(app) {
             // or to 'newly-normal' when a non-exception occurs.
             if (throughput <= watchdog.threshold) {
               watchdog.exceptionCount++;
-              if (watchdog.exceptionCount == watchdog.startActionThreshold) changeState(watchdog, 'problem');
+              if ((watchdog.exceptionCount == watchdog.startActionThreshold) && (watchdog.state != 'stopped')) changeState(watchdog, 'problem');
             } else {
               watchdog.exceptionCount = 0;
               if (watchdog.state != 'normal') watchdog.state = 'newly-normal';
