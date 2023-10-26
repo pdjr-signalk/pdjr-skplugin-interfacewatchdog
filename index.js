@@ -259,8 +259,8 @@ module.exports = function(app) {
           const status = plugin.options.watchdogs.reduce((a,watchdog) => {
             a[watchdog.name] = {
               currentState: watchdog.state,
-              stateHistory: watchdog.stateHistory,
-              problemCount: watchdog.problemCount
+              exceptionCount: watchdog.exceptionCount,
+              stateHistory: watchdog.stateHistory
             }
             return(a);
           },{}); 
