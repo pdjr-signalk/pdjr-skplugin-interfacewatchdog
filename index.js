@@ -161,7 +161,7 @@ module.exports = function(app) {
             // or to 'newly-normal' when a non-exception occurs.
             if (throughput <= watchdog.threshold) {
               watchdog.exceptionCount++;
-              if ((watchdog.exceptionCount == watchdog.startActionThreshold) && (watchdog.state != 'stopped')) changeState(watchdog, 'problem');
+              if ((watchdog.exceptionCount == watchdog.startActionThreshold) && (!watchdog.state.startsWith('stop'))) changeState(watchdog, 'problem');
             } else {
               watchdog.exceptionCount = 0;
               if (watchdog.state != 'normal') watchdog.state = 'newly-normal';
@@ -171,7 +171,7 @@ module.exports = function(app) {
 
             // Operate the state machine.
             switch (watchdog.state) {
-              case 'waiting':
+              case 'starting':
                 break;
               case 'newly-normal':
                 app.debug(`${watchdog.name} on ${watchdog.interface} started normal operation`, false);
@@ -193,21 +193,23 @@ module.exports = function(app) {
                       App.notify(watchdog.notificationPath, { state: 'alarm', method: [], message: `Server restart (${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold})` }, plugin.id);
                       setTimeout(() => { saveShadowOptions(); process.exit(); }, 1000);
                     } else {
-                      changeState(watchdog, 'stopped');
+                      changeState(watchdog, 'stopping');
                     }
                     break;
                   case 'stop-watchdog':
-                    changeState(watchdog, 'stopped');
+                    changeState(watchdog, 'stopping');
                     break;
                   default:
                     break;
                 }
                 break;
-              case 'stopped':
+              case 'stopping':
                 app.debug(`terminating watchdog on ${watchdog.name} on ${watchdog.interface}`, false);
                 App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
                 delete watchdog.restartCount;
-                plugin.options.watchdogs.splice(i, 1);
+                changeState(watchdog, 'stopped')
+                break;
+              case 'stopped':
                 break;
             }
           }
