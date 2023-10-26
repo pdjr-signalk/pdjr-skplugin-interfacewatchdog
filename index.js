@@ -122,7 +122,7 @@ module.exports = function(app) {
       return(combinedState);
     });
 
-    plugin.options.watchdogs.forEach(watchdog => { changeState(watchdog, 'waiting'); });
+    plugin.options.watchdogs.forEach(watchdog => { changeState(watchdog, 'starting'); });
     
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
@@ -237,6 +237,7 @@ module.exports = function(app) {
 
   function saveShadowOptions() {
     var shadowStuff = {
+      fileCreated: plugin.options.fileCreated,
       watchdogs: plugin.options.watchdogs.map(watchdog => ({ name: watchdog.name, problemsSinceFileCreation: watchdog.problemsSinceFileCreation, problemsInLastSession: watchdog.problemsSinceLastRestart, restartCount: watchdog.restartCount }))
     };
     fs.writeFileSync(plugin.shadowOptionsFilename, JSON.stringify(shadowStuff));
