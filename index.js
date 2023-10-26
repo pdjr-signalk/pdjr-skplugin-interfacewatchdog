@@ -93,14 +93,17 @@ module.exports = function(app) {
   plugin.start = function(options) {
 
     // Make plugin.options by merging defaults and options and dropping
-    // any disabled watchdogs (i.e where waitForActivity == 0).
+    // any disabled watchdogs.
     plugin.options = {};
     plugin.options.watchdogs =
       options.watchdogs
       .map(watchdog => ({ ...plugin.schema.properties.watchdogs.items.default, ...{ name: watchdog.interface, notificationPath: `notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}` },  ...watchdog }))
       .filter(watchdog => (watchdog.startActionThreshold != 0));
 
-    // Get shadow options persisted over restarts
+    // We might be starting up in the middle of a restart sequence,
+    // in which case a restartCount property will be being passed
+    // forwards through the shadow options file. Also take this
+    // opportunity to initialise problemCount and state.
     plugin.shadowOptionsFilename = require('path').join( app.getDataDirPath(), 'shadow-options.json');
     var shadowOptions; 
     try { shadowOptions = require(plugin.shadowOptionsFilename); } catch(e) { shadowOptions = { watchdogs: [] }; }
@@ -108,12 +111,14 @@ module.exports = function(app) {
       var shadowwatchdog = shadowOptions.watchdogs.reduce((a,i) => ((i.name == watchdog.name)?i:a), {});
       return({ ...{ problemCount: 0, state: 'waiting' }, ...shadowwatchdog, ...watchdog });    
     });
+
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     // If we have some enabled watchdogs then go into production.
     if (plugin.options.watchdogs.length > 0) {
 
-      // Report plugin status to dashboard and notify on each watchdog.
+      // Report plugin status to dashboard and notify startup of each
+      // watchdog.
       var interfaces = _.sortedUniq(plugin.options.watchdogs.map(i => (i.interface)));
       log.N(`watching interface${(interfaces.length == 1)?'':'s'} ${interfaces.join(', ')}`);
       plugin.options.watchdogs.forEach(watchdog => {
@@ -121,10 +126,13 @@ module.exports = function(app) {
         App.notify(watchdog.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id);
       });  
 
-      // Register as a serverevent recipient.
+      // Register as a serverevent recipient - all substantive
+      // processing happens in the event handler.
       app.on('serverevent', (e) => {
         if ((e.type) && (e.type == "SERVERSTATISTICS")) {
-          // Get throughput statistics for all configured watchdog
+
+          // Get system throughput statistic for all interfaces that
+          // are associated with a watchdog.
           const interfaceThroughputs =
             Object.keys(e.data.providerStatistics)
             .filter(key => plugin.options.watchdogs.map(watchdog => watchdog.interface).includes(key))
@@ -136,18 +144,20 @@ module.exports = function(app) {
             var watchdog = plugin.options.watchdogs[i];
             var throughput = (interfaceThroughputs[watchdog.interface])?interfaceThroughputs[watchdog.interface]:0;
 
-            if ((throughput > 0) && (watchdog.state == 'waiting')) watchdog.state = 'active';
-
+            // Count consecutive throughput problems and transition the
+            // watchdog state to 'problem' if actionThreshold is reached
+            // or to 'newly-normal' when a problem first disappears.
             if (throughput <= watchdog.threshold) {
               watchdog.problemCount++;
               if (watchdog.problemCount == watchdog.startActionThreshold) watchdog.state = 'problem';
             } else {
-              if (watchdog.state != 'normal') watchdog.state = 'newly-normal';
               watchdog.problemCount = 0;
+              if (watchdog.state != 'normal') watchdog.state = 'newly-normal';
             }
 
-            app.debug(JSON.stringify(watchdog));
+            //app.debug(JSON.stringify(watchdog));
 
+            // Operate the state machine.
             switch (watchdog.state) {
               case 'waiting':
                 break;
