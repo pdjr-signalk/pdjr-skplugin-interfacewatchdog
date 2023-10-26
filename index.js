@@ -193,17 +193,17 @@ module.exports = function(app) {
                       App.notify(watchdog.notificationPath, { state: 'alarm', method: [], message: `Server restart (${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold})` }, plugin.id);
                       setTimeout(() => { saveShadowOptions(); process.exit(); }, 1000);
                     } else {
-                      changeState(watchdog, 'done');
+                      changeState(watchdog, 'stopped');
                     }
                     break;
-                  case 'kill-watchdog':
-                    changeState(watchdog, 'done');
+                  case 'stop-watchdog':
+                    changeState(watchdog, 'stopped');
                     break;
                   default:
                     break;
                 }
                 break;
-              case 'done':
+              case 'stopped':
                 app.debug(`terminating watchdog on ${watchdog.name} on ${watchdog.interface}`, false);
                 App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
                 delete watchdog.restartCount;
