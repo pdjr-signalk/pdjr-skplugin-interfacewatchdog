@@ -237,7 +237,7 @@ module.exports = function(app) {
 
   function changeState(watchdog, state) {
     watchdog.state = state;
-    watchdog.stateHistory.push({ state: state, heartbeat: plugin.heartbeat });
+    watchdog.stateHistory.push(Date().toString('YYYY-MM-DDTHH:mm:ss') + state);
   }
 
   function saveShadowOptions() {
