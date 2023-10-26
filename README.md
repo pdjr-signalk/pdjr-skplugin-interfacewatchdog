@@ -6,16 +6,19 @@ Interface activity watchdog for Signal K.
 
 **pdjr-skplugin-interfacewatchdog** implements one or more watchdogs
 on one or more Signal K interfaces, triggering an exception when
-throughput on an interface falls to or below some threshold rate
-specified for the watchdog.
+throughput on an interface falls through some specified threshold
+rate.
 
-When a watchdog detects the appearance or disappearace of an issue
-with interface throughput it responds by writing a message to the
-server log, issuing a notification.
-An issue can be handled in a number of ways: it can be ignored (in
+Each watchdog logs key events to the server log and issues Signal K
+notifications on its own notification key.
+
+The sensitivity of the watchdog to identified exceptions (i.e. when
+an exception becomes a problem) can be configured and the appearance
+of a problem can be handled in a number of ways: it can be ignored (in
 which case monitoring continues), or the watchdog can be disabled,
 or the host Signal K server can be restarted in the hope that the
-problem interface can be re-awakened.
+problem can be corrected by a hard reset of the associated interface.
+
 If server restarting is configured, the maximum number of allowed
 restarts can be limited to prevent a persistent loss of service
 resulting from runaway reboots on a dead interface.
@@ -90,9 +93,47 @@ There is no restriction on the number of times an interface can
 occur in the *Watchdogs* array so long as each *Watchdog* has a unique
 name (although it only makes sense if one *Watchdog* specifies a
 'restart-server' *action*.
-My ship has two NMEA busses bridged to a single interface and careful
-setting of *threshold* on two *Watchdog* configurations allows me to
-monitor and notify the health of both data streams.
+
+### Example configuration
+
+My ship has two NMEA busses bridged to a single Actisense interface
+called 'ngt-1'.
+
+Bus0 is my 'domestic' NMEA bus and is expected to be available 24/7.
+Typical throughput on 'ngt-1' with just this bus enabled is around 20
+deltas per second.
+
+Bus1 is my 'navigation' bus and is expected to be available when
+navigating.
+Typical throughput on 'ngt1' with both busses enabled is around 60
+deltas per second.
+
+Setting appropriate *threshold* values on two *Watchdog* configurations
+allows me to monitor and notify the health of both data streams and to
+take crude remedial action if the 'ngt-1' interface dies.
+```
+{
+  "configuration": {
+    "watchdogs": [
+      {
+        "name": "Bus0",
+        "interface": "ngt-1",
+        "threshold": 10,
+        "action": "restart-server"
+      },
+      {
+        "name": "Bus1",
+        "interface": "ngt-1",
+        "threshold": 30,
+        "action": "none"
+      }
+    ]
+  },
+  "enabled": true,
+  "enableDebug": false,
+  "enableLogging": false
+}
+```
 
 ## Notifications
 
