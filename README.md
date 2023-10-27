@@ -41,7 +41,8 @@ threshold.
     Optional string property giving a name that will be used in log and
     notification paths to identify this watchdog.; this can be useful
     if you want granular reporting on interface behaviour.
-    Defaults to <code>interface</code>.
+    Defaults to <em>interface</em>-<em>n</em> where <en> is an integer
+    assigned to ensure uniqueness</code>.
   </dd>
   <dt>Interface name <code>interface</code></dt>
   <dd>
