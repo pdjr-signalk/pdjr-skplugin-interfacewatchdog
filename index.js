@@ -94,10 +94,11 @@ module.exports = function(app) {
 
     // Make plugin.options by merging defaults and options and dropping
     // any disabled watchdogs.
+    interfaceNumbers = plugin.options.watchdog.reduce((a,w) => { a[w.interface] = 0; return(a); }, {});
     plugin.options = {};
     plugin.options.watchdogs =
       options.watchdogs
-      .map(watchdog => ({ ...plugin.schema.properties.watchdogs.items.default, ...{ name: watchdog.interface, notificationPath: `notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}` },  ...watchdog }))
+      .map(watchdog => ({ ...plugin.schema.properties.watchdogs.items.default, ...{ name: (watchdog.interface + '-' + interfaceNumbers[watchdog.interface]++), notificationPath: `notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}` },  ...watchdog }))
       .filter(watchdog => (watchdog.startActionThreshold != 0));
 
     // We might be starting up in the middle of a restart sequence,
