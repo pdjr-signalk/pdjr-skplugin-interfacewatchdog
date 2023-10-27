@@ -99,7 +99,7 @@ module.exports = function(app) {
     const interfaceNumbers = options.watchdogs.reduce((a,w) => { a[w.interface] = 0; return(a); }, {});
     plugin.options.watchdogs.forEach(watchdog => {
       var n = (watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
-      watchdog.name = (wathchdog.name)?watchdog.name:n;
+      watchdog.name = (watchdog.name)?watchdog.name:n;
       watchdog.notificationPath = (watchdog.notificationPath)?watchdog.notificationPath:`notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}`;
     });
 
