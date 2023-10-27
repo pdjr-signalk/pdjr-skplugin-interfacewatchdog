@@ -105,8 +105,7 @@ module.exports = function(app) {
         retval.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${retval.name}`;
         return(retval);
       })
-    app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
-
+  
     // We might be starting up in the middle of a restart sequence,
     // in which case a number of dynamic properties will be passed
     // forwards through the shadow options file. Also take this
