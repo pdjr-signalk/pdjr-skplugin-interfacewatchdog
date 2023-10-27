@@ -95,6 +95,7 @@ module.exports = function(app) {
     // Make plugin.options by merging defaults and options and dropping
     // any disabled watchdogs.
     interfaceNumbers = plugin.options.watchdog.reduce((a,w) => { a[w.interface] = 0; return(a); }, {});
+    console.log(interfaceNumbers);
     plugin.options = {};
     plugin.options.watchdogs =
       options.watchdogs
