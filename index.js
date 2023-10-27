@@ -102,7 +102,7 @@ module.exports = function(app) {
       .map(watchdog => {
         var retval = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
         retval.name = (watchdog.name)?watchdog.name:(watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
-        retval.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}`;
+        retval.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${retval.name}`;
         return(retval);
       })
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
