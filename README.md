@@ -36,13 +36,6 @@ of a specified Signal K interface against a specified throughput
 threshold.
 
 <dl>
-  <dt>Watchdog name <code>name</code></dt>
-  <dd>
-    Optional string property giving a name that will be used in log and
-    notification paths to identify this watchdog.
-    Defaults to <em>interface</em>-<em>n</em> where <em>n</em> is an
-    integer assigned to ensure uniqueness.
-  </dd>
   <dt>Interface name <code>interface</code></dt>
   <dd>
     Required string property specifying the Signal K interface that
@@ -50,26 +43,34 @@ threshold.
     This must match one of the ID's displayed in the Signal K dashboard
     under <em>Server -> Data Connections</em>.
   </dd>
+  <dt>Watchdog name <code>name</code></dt>
+  <dd>
+    Optional string property giving a unique name that will be used in
+    log and notification paths to identify this watchdog.
+    Defaults to <em>interface</em>-<em>n</em> where <em>n</em> is an
+    integer automatically assigned to ensure uniqueness.
+  </dd>
   <dt>Throughput threshold in deltas/s <code>threshold</code></dt>
   <dd>
     Optional integer data rate (in deltas per second) at or below which
     a problem should be logged.
-    Defaults to 0 which will only identify interfaces that are completely
-    dead.
+    Defaults to 0 which will only identify interfaces that are
+    completely dead.
   <dd>
   <dt>Start taking action after this many problems <code>startActionThreshold</code></dt>
   <dd>
-    If the number of problems logged on *interface* reaches this value
-    then perform the configured action (see below).
-    A value of 0 says wait indefinitely and so disables watchdog
+    Optionally integer specifying the number of problems that can be
+    logged on *interface* before triggering the configured action (see
+    below).
+    A value of 0 says wait indefinitely and so disables the watchdog
     function on this interface.
     Defaults to 3.
   </dd>
   <dt>Stop taking action after this many problems <code>stopActionThreshold</code></dt>
   <dd>
-    If the number of problems logged on <em>interface</em> reaches this value
-    then stop performing the configured action and stop watching this
-    interface.
+    If the number of problems logged on <em>interface</em> reaches this
+    value then stop performing the configured action and stop watching
+    this interface.
     The supplied value must be greater than *startActionThreshold*.
     Defaults to <em>startActionThreshold</em> + 3.
   </dd>
@@ -84,15 +85,15 @@ threshold.
   <dd>
     Optional path under 'vessels.self.' on which the plugin should issue
     status notifications.
-    If omitted, then the path 'notifications.plugins.interfacewatchdog.<em>interface</em>'
+    If omitted, then the path 'notifications.plugins.interfacewatchdog.<em>name</em>'
     will be used.
   </dd>
 </dl>
 
 There is no restriction on the number of times an interface can
 occur in the *Watchdogs* array so long as each *Watchdog* has a unique
-name (although it only makes sense if one *Watchdog* specifies a
-'restart-server' *action*.
+name (although it only makes sense if one *Watchdog* on a shared
+*interface* specifies a 'restart-server' *action*.
 
 ### Example configuration
 

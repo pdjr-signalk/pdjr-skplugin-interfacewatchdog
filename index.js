@@ -34,12 +34,12 @@ const PLUGIN_SCHEMA = {
         "title": "Watchdog",
         "type": "object",
         "properties": {
-          "name": {
-            "title": "Watchdog name",
-            "type": "string"
-          },
           "interface": {
             "title": "Interface name",
+            "type": "string"
+          },
+          "name": {
+            "title": "Watchdog name",
             "type": "string"
           },
           "threshold": {
