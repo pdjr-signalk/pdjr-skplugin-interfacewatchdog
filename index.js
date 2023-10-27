@@ -98,8 +98,8 @@ module.exports = function(app) {
     plugin.options.watchdogs = options.watchdogs.filter(watchdog => (watchdog.startActionThreshold != 0));
     const interfaceNumbers = options.watchdogs.reduce((a,w) => { a[w.interface] = 0; return(a); }, {});
     plugin.options.watchdogs.forEach(watchdog => {
-      var n = (watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
-      watchdog.name = (watchdog.name)?watchdog.name:n;
+      watchdog = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
+      watchdog.name = (watchdog.name)?watchdog.name:(watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
       watchdog.notificationPath = (watchdog.notificationPath)?watchdog.notificationPath:`notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}`;
     });
 
