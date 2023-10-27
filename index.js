@@ -97,7 +97,7 @@ module.exports = function(app) {
     plugin.options = {};
     plugin.options.watchdogs =
       options.watchdogs
-      .filter(watchdog => (watchdogwatchdog.startActionThreshold != 0))
+      .filter(watchdog => (watchdog.startActionThreshold != 0))
       .map(watchdog => {
         var retval = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
         retval.name = (watchdog.name)?watchdog.name:(watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
