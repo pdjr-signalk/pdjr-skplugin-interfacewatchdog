@@ -94,14 +94,17 @@ module.exports = function(app) {
 
     // Make plugin.options by merging defaults and options and dropping
     // any disabled watchdogs.
-    plugin.options = {};
-    plugin.options.watchdogs = options.watchdogs.filter(watchdog => (watchdog.startActionThreshold != 0));
     const interfaceNumbers = options.watchdogs.reduce((a,w) => { a[w.interface] = 0; return(a); }, {});
-    plugin.options.watchdogs.forEach(watchdog => {
-      watchdog = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
-      watchdog.name = (watchdog.name)?watchdog.name:(watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
-      watchdog.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}`;
-    });
+    plugin.options = {};
+    plugin.options.watchdogs =
+      options.watchdogs
+      .filter(watchdog => (watchdog.startActionThreshold != 0))
+      .map(watchdog => {
+        var retval = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
+        retval.name = (watchdog.name)?watchdog.name:(watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
+        retval.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}`;
+        return(retval);
+      })
     app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     // We might be starting up in the middle of a restart sequence,
