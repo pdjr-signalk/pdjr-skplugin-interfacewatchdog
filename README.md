@@ -39,8 +39,7 @@ threshold.
   <dt>Watchdog name <code>name</code></dt>
   <dd>
     Optional string property giving a name that will be used in log and
-    notification paths to identify this watchdog.; this can be useful
-    if you want granular reporting on interface behaviour.
+    notification paths to identify this watchdog.
     Defaults to <em>interface</em>-<em>n</em> where <em>n</em> is an
     integer assigned to ensure uniqueness.
   </dd>
@@ -72,7 +71,7 @@ threshold.
     then stop performing the configured action and stop watching this
     interface.
     The supplied value must be greater than *startActionThreshold*.
-    Defaults to 6.
+    Defaults to *startActionThreshold + 3.
   </dd>
   <dt>Action to take? <code>action</code></dt>
   <dd>
