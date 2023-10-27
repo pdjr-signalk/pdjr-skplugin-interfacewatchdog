@@ -5,8 +5,8 @@ Interface activity watchdog for Signal K.
 ## Description
 
 **pdjr-skplugin-interfacewatchdog** implements one or more watchdogs
-on one or more Signal K interfaces, triggering an exception when
-throughput on an interface falls through some specified threshold
+on one or more Signal K interfaces, triggering an exception if
+throughput on an interface falls to some specified threshold
 rate.
 
 Each watchdog logs key events to the server log and issues Signal K
