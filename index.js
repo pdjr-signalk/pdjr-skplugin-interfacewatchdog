@@ -100,8 +100,9 @@ module.exports = function(app) {
     plugin.options.watchdogs.forEach(watchdog => {
       watchdog = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
       watchdog.name = (watchdog.name)?watchdog.name:(watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
-      watchdog.notificationPath = (watchdog.notificationPath)?watchdog.notificationPath:`notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}`;
+      watchdog.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}`;
     });
+    app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
 
     // We might be starting up in the middle of a restart sequence,
     // in which case a number of dynamic properties will be passed
