@@ -94,12 +94,14 @@ module.exports = function(app) {
 
     // Make plugin.options by merging defaults and options and dropping
     // any disabled watchdogs.
-    const interfaceNumbers = options.watchdogs.reduce((a,w) => { a[w.interface] = 0; return(a); }, {});
     plugin.options = {};
-    plugin.options.watchdogs =
-      options.watchdogs
-      .map(watchdog => ({ ...plugin.schema.properties.watchdogs.items.default, ...{ name: (watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++)), notificationPath: `notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}` },  ...watchdog }))
-      .filter(watchdog => (watchdog.startActionThreshold != 0));
+    plugin.options.watchdogs = options.watchdogs.filter(watchdog => (watchdog.startActionThreshold != 0));
+    const interfaceNumbers = options.watchdogs.reduce((a,w) => { a[w.interface] = 0; return(a); }, {});
+    plugin.options.watchdogs.forEach(watchdog => {
+      var n = (watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
+      watchdog.name = (wathchdog.name)?watchdog.name:n;
+      watchdog.notificationPath = (watchdog.notificationPath)?watchdog.notificationPath:`notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}`;
+    });
 
     // We might be starting up in the middle of a restart sequence,
     // in which case a number of dynamic properties will be passed
