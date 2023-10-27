@@ -68,7 +68,6 @@ const PLUGIN_SCHEMA = {
         "default": { 
           "threshold": 0,
           "startActionThreshold": 3,
-          "stopActionThreshold": 6,
           "action": "none"
         }
       }
@@ -98,10 +97,11 @@ module.exports = function(app) {
     plugin.options = {};
     plugin.options.watchdogs =
       options.watchdogs
-      .filter(watchdog => (watchdog.startActionThreshold != 0))
+      .filter(watchdog => (watchdogwatchdog.startActionThreshold != 0))
       .map(watchdog => {
         var retval = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
         retval.name = (watchdog.name)?watchdog.name:(watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
+        retval.stopActionThreshold = (watchdog.stopActionThreshold)?watchdog.stopActionThreshold:(watchdog.startActionThreshold + 3);
         retval.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${retval.name}`;
         return(retval);
       })

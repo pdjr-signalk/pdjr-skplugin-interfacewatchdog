@@ -67,11 +67,11 @@ threshold.
   </dd>
   <dt>Stop taking action after this many problems <code>stopActionThreshold</code></dt>
   <dd>
-    If the number of problems logged on *interface* reaches this value
+    If the number of problems logged on <em>interface</em> reaches this value
     then stop performing the configured action and stop watching this
     interface.
     The supplied value must be greater than *startActionThreshold*.
-    Defaults to *startActionThreshold + 3.
+    Defaults to <em>startActionThreshold</em> + 3.
   </dd>
   <dt>Action to take? <code>action</code></dt>
   <dd>
