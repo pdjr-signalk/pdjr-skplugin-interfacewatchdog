@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/pdjr-signalk/pdjr-skplugin-interfacewatchdog#readme",
   "dependencies": {
+    "lodash": "^4.17.21",
     "sprintf-js": "^1.1.2"
   },
   "directories": {
