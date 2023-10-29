@@ -101,7 +101,7 @@ module.exports = function(app) {
       .map(watchdog => {
         var retval = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
         retval.name = (watchdog.name)?watchdog.name:(watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
-        retval.stopActionThreshold = (watchdog.stopActionThreshold)?watchdog.stopActionThreshold:(watchdog.startActionThreshold + 3);
+        retval.stopActionThreshold = (watchdog.stopActionThreshold)?watchdog.stopActionThreshold:(retval.startActionThreshold + 3);
         retval.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${retval.name}`;
         return(retval);
       })
@@ -174,7 +174,7 @@ module.exports = function(app) {
             // before the immediate transition to 'normal'.
             if (throughput <= watchdog.threshold) {
               watchdog.exceptionCount++;
-              if ((watchdog.exceptionCount == watchdog.startActionThreshold) && (!watchdog.state.startsWith('stop'))) changeState(watchdog, 'problem');
+              if ((watchdog.exceptionCount == watchdog.startActionThreshold) && (!watchdog.state.startsWith('stop'))) watchdog.state = 'problem';
             } else {
               watchdog.exceptionCount = 0;
               if (watchdog.state != 'normal') watchdog.state = 'newly-normal';
@@ -186,9 +186,9 @@ module.exports = function(app) {
             switch (watchdog.state) {
               case 'starting':
                 break;
-              case 'newly-normal':
-                app.debug(`${watchdog.name} on ${watchdog.interface} started normal operation`, false);
-                App.notify(watchdog.notificationPath, { state: 'normal', method: [], message: `Started normal operation` }, plugin.id);
+              case 'newly-normal': // Transition to 'normal'
+                app.debug(`${watchdog.name} on ${watchdog.interface}: throughput moved above threshold`, false);
+                App.notify(watchdog.notificationPath, { state: 'normal', method: [], message: `Throughput on ${watchdog.interface} moved above threshold.` }, plugin.id);
                 changeState(watchdog, 'normal');
                 delete watchdog.restartCount;
                 break;
@@ -201,23 +201,32 @@ module.exports = function(app) {
                   case 'restart-server':
                     if ((!watchdog.restartCount) || (watchdog.restartCount < (watchdog.stopActionThreshold - watchdog.startActionThreshold))) {
                       watchdog.restartCount = (watchdog.restartCount)?(watchdog.restartCount + 1):1;
-                      app.debug(`${watchdog.name} on ${watchdog.interface} is triggering a server restart (${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold})`, false);
-                      App.notify(watchdog.notificationPath, { state: 'alarm', method: [], message: `Server restart (${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold})` }, plugin.id);
+                      app.debug(`${watchdog.name} on ${watchdog.interface}: througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`);
+                      App.notify(watchdog.notificationPath, { state: 'alarm', method: [], message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}` }, plugin.id);
                       setTimeout(() => { saveShadowOptions(); process.exit(); }, 1000);
                     } else {
-                      changeState(watchdog, 'stopping');
+                      changeState(watchdog, 'suspend');
                     }
                     break;
                   case 'stop-watchdog':
-                    changeState(watchdog, 'stopping');
+                    changeState(watchdog, 'stop');
                     break;
+                  case 'suspend-watchdog':
+                    watchdog.state = 'suspend';
                   default:
                     break;
                 }
                 break;
-              case 'stopping':
-                app.debug(`terminating watchdog on ${watchdog.name} on ${watchdog.interface}`, false);
-                App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog` });
+              case 'suspend': // Transition to 'suspended'
+                app.debug(`${watchdog.name} on ${watchdog.interface}: suspendinging watchdog until interface throughput rises above threshold.`);
+                App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.` }, plugin.id);
+                changeState(watchdog, 'suspended');
+                break;
+              case 'suspended':
+                break;
+              case 'stop': // Transition to 'stopped'
+                app.debug(`${watchdog.name} on ${watchdog.interface}: terminating watchdog`);
+                App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog on ${watchdog.interface}` }, plugin.id);
                 delete watchdog.restartCount;
                 changeState(watchdog, 'stopped')
                 break;
