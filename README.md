@@ -10,14 +10,8 @@ throughput on an interface falls below some specified *threshold*
 rate.
 
 A sequence of contiguous exceptions is characterised as a *problem*
-and problems result in the watchdog taking some *action.
-The length of exception sequence which triggers a problem is 
-a configurable number of
-contiguous *problem* and the appearance of a
-problem is defined by a configurable 
-
-Each watchdog logs key events to the server log and issues Signal K
-notifications on its own notification key.
+and problems may result in the watchdog taking,a nd perhaps repeating,
+some *action*.
 
 The sensitivity of a watchdog to exceptions can be configured and the appearance
 of a problem can be handled in a number of ways: it can be ignored (in
@@ -28,6 +22,9 @@ problem can be corrected by a hard reset of the associated interface.
 If server restarting is configured, the maximum number of allowed
 restarts can be limited to prevent a persistent loss of service
 resulting from runaway reboots on a dead interface.
+
+Each watchdog logs key events to the server log and issues Signal K
+notifications on its own notification key.
 
 The plugin exposes an
 [HTTP API](https://pdjr-signalk.github.io/pdjr-skplugin-interfacewatchdog/)
@@ -84,8 +81,8 @@ threshold.
   <dd>
   The action to take on each problem event between
   <code>startActionThreshold</code> and <code>stopActionThreshold</code>.
-  Must be one of 'none', 'kill-watchdog' or 'restart-server'.
-  Defaults to 'kill-watchdog'.
+  Must be one of 'none', suspend-watchdog' or 'restart-server'.
+  Defaults to 'suspend-watchdog'.
   </dd>
   <dt>Notification path <code>notificationPath</code></dt>
   <dd>
@@ -99,7 +96,7 @@ threshold.
 There is no restriction on the number of times an interface can
 occur in the *Watchdogs* array so long as each *Watchdog* has a unique
 name (although it only makes sense if one *Watchdog* on a shared
-*interface* specifies a 'restart-server' *action*.
+*interface* specifies a 'restart-server' *action*).
 
 ### Example configuration
 
@@ -132,7 +129,7 @@ take crude remedial action if the 'ngt-1' interface dies.
         "name": "Bus1",
         "interface": "ngt-1",
         "threshold": 30,
-        "action": "none"
+        "action": "suspend-watchdog"
       }
     ]
   },
