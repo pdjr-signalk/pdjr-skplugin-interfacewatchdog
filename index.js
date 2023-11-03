@@ -19,7 +19,6 @@ const _ = require('lodash');
 
 const myApp = require('./lib/signalk-libapp/App.js');
 const Log = require('./lib/signalk-liblog/Log.js');
-const internal = require('stream');
 
 const PLUGIN_ID = "interfacewatchdog";
 const PLUGIN_NAME = "Interface activity watchdog";

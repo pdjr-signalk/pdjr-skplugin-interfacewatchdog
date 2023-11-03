@@ -26,8 +26,6 @@
     "lodash": "^4.17.21",
     "signalk-libapp": "github:pdjr-signalk/signalk-libapp",
     "signalk-liblog": "github:pdjr-signalk/signalk-liblog",
-    "signalk-libnotification": "github:pdjr-signalk/signalk-libnotification",
-    "sprintf-js": "^1.1.2"
   },
   "directories": {
     "lib": "lib"
