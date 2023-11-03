@@ -147,7 +147,7 @@ module.exports = function(app) {
       log.N(`watching interface${(interfaces.length == 1)?'':'s'} ${interfaces.join(', ')}`);
       plugin.options.watchdogs.forEach(watchdog => {
         app.debug(`waiting for ${watchdog.name} on ${watchdog.interface} to become active`, false);
-        App.notify(watchdog.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id);
+        plugin.App.notify(watchdog.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id);
       });  
 
       // Register as a serverevent recipient - all substantive
@@ -190,7 +190,7 @@ module.exports = function(app) {
                 break;
               case 'newly-normal': // Transition to 'normal'
                 app.debug(`${watchdog.name} on ${watchdog.interface}: throughput moved above threshold`, false);
-                App.notify(watchdog.notificationPath, { state: 'normal', method: [], message: `Throughput on ${watchdog.interface} moved above threshold.` }, plugin.id);
+                plugin.App.notify(watchdog.notificationPath, { state: 'normal', method: [], message: `Throughput on ${watchdog.interface} moved above threshold.` }, plugin.id);
                 changeState(watchdog, 'normal');
                 delete watchdog.restartCount;
                 break;
@@ -204,7 +204,7 @@ module.exports = function(app) {
                     if ((!watchdog.restartCount) || (watchdog.restartCount < (watchdog.stopActionThreshold - watchdog.startActionThreshold))) {
                       watchdog.restartCount = (watchdog.restartCount)?(watchdog.restartCount + 1):1;
                       app.debug(`${watchdog.name} on ${watchdog.interface}: througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`);
-                      App.notify(watchdog.notificationPath, { state: 'alarm', method: [], message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}` }, plugin.id);
+                      plugin.App.notify(watchdog.notificationPath, { state: 'alarm', method: [], message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}` }, plugin.id);
                       setTimeout(() => { saveShadowOptions(); process.exit(); }, 1000);
                     } else {
                       changeState(watchdog, 'suspend');
@@ -221,14 +221,14 @@ module.exports = function(app) {
                 break;
               case 'suspend': // Transition to 'suspended'
                 app.debug(`${watchdog.name} on ${watchdog.interface}: suspendinging watchdog until interface throughput rises above threshold.`);
-                App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.` }, plugin.id);
+                plugin.App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.` }, plugin.id);
                 changeState(watchdog, 'suspended');
                 break;
               case 'suspended':
                 break;
               case 'stop': // Transition to 'stopped'
                 app.debug(`${watchdog.name} on ${watchdog.interface}: terminating watchdog`);
-                App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog on ${watchdog.interface}` }, plugin.id);
+                plugin.App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog on ${watchdog.interface}` }, plugin.id);
                 delete watchdog.restartCount;
                 changeState(watchdog, 'stopped')
                 break;
