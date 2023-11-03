@@ -56,7 +56,7 @@ const PLUGIN_SCHEMA = {
           "action": {
             "title": "Action to take",
             "type": "string",
-            "enum": [ "none", "kill-watchdog", "restart-server" ]
+            "enum": [ "none", "restart-server", "suspend-watchdog", "stop-watchdog" ]
           },
           "notificationPath": {
             "title": "Notification path",
@@ -99,9 +99,9 @@ module.exports = function(app) {
           retval.name = (watchdog.name)?watchdog.name:`${watchdog.interface}-${interfaceNumbers[watchdog.interface]++}`;
           retval.stopActionThreshold = (watchdog.stopActionThreshold)?watchdog.stopActionThreshold:(retval.startActionThreshold + 3);
           retval.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${retval.name}`;
-          if (!watchdog.interface) throw new Error("required property 'interface' is missing");
-          if (!watchdog.startActionThreshold) throw new Error("required property 'startActionThreshold' is missing");
-          if (watchdog.startActionThreshold <= 0) throw new Error("startActionThreshold is 0");
+          if (!retval.interface) throw new Error("required property 'interface' is missing");
+          if (!plugin.schema.properties.watchdogs.items.properties.action.enum.includes(retval.action)) throw new Error("property 'action' is invalid");
+          if (retval.startActionThreshold <= 0) throw new Error("startActionThreshold is 0");
           a.push(retval);
         } catch(e) { log.W(`dropping watchdog '${watchdog.name}' (${e.message})`); }
         return(a);
