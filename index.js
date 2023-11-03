@@ -220,7 +220,7 @@ module.exports = function(app) {
                 }
                 break;
               case 'suspend': // Transition to 'suspended'
-                log.W(`${watchdog.name} on ${watchdog.interface}: suspendinging watchdog`, false);
+                log.W(`${watchdog.name} on ${watchdog.interface}: suspending watchdog`, false);
                 plugin.App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.` }, plugin.id);
                 changeState(watchdog, 'suspended');
                 break;
