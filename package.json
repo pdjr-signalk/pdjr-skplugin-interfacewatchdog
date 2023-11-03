@@ -28,6 +28,5 @@
     "signalk-liblog": "github:pdjr-signalk/signalk-liblog"
   },
   "directories": {
-    "lib": "lib"
   }
 }
