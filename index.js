@@ -84,27 +84,30 @@ module.exports = function(app) {
   plugin.description = PLUGIN_DESCRIPTION;
   plugin.schema = PLUGIN_SCHEMA;
   plugin.uiSchema = PLUGIN_UISCHEMA;
+  plugin.App = new myApp(app, plugin.id);
 
-  const App = new myApp(app, plugin.id);
   const log = new Log(plugin.id, { ncallback: app.setPluginStatus, ecallback: app.setPluginError });
   
   plugin.start = function(options) {
 
-    // Make plugin.options by merging defaults and options and dropping
-    // any disabled watchdogs.
-    const interfaceNumbers = options.watchdogs.reduce((a,w) => { a[w.interface] = 0; return(a); }, {});
-    plugin.options = {};
-    plugin.options.watchdogs =
-      options.watchdogs
-      .filter(watchdog => (watchdog.startActionThreshold != 0))
-      .map(watchdog => {
-        var retval = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
-        retval.name = (watchdog.name)?watchdog.name:(watchdog.interface + '-' + (interfaceNumbers[watchdog.interface]++));
-        retval.stopActionThreshold = (watchdog.stopActionThreshold)?watchdog.stopActionThreshold:(retval.startActionThreshold + 3);
-        retval.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${retval.name}`;
-        return(retval);
-      })
-  
+    plugin.options = { watchdogs: [] };
+    if ((options.watchdogs) && (Array.isArray(options.watchdogs))) {
+      const interfaceNumbers = options.watchdogs.reduce((a,w) => { if (w.interface) a[w.interface] = 0; return(a); }, {});
+      plugin.options.watchdogs = options.watchdogs.reduce((a, watchdog) => {
+        try {
+          var retval = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
+          retval.name = (watchdog.name)?watchdog.name:`${watchdog.interface}-${interfaceNumbers[watchdog.interface]++}`;
+          retval.stopActionThreshold = (watchdog.stopActionThreshold)?watchdog.stopActionThreshold:(retval.startActionThreshold + 3);
+          retval.notificationPath = (watchdog.notificationPath)?(watchdog.notificationPath):`notifications.plugins.${plugin.id}.watchdogs.${retval.name}`;
+          if (!watchdog.interface) throw new Error("required property 'interface' is missing");
+          if (!watchdog.startActionThreshold) throw new Error("required property 'startActionThreshold' is missing");
+          if (watchdog.startActionThreshold <= 0) throw new Error("startActionThreshold is 0");
+          a.push(retval);
+        } catch(e) { log.W(`dropping watchdog '${watchdog.name}' (${e.message})`); }
+        return(a);
+      }, []);
+    }
+      
     // We might be starting up in the middle of a restart sequence,
     // in which case a number of dynamic properties will be passed
     // forwards through the shadow options file. Also take this
