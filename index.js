@@ -220,14 +220,14 @@ module.exports = function(app) {
                 }
                 break;
               case 'suspend': // Transition to 'suspended'
-                app.debug(`${watchdog.name} on ${watchdog.interface}: suspendinging watchdog until interface throughput rises above threshold.`);
+                log.W(`${watchdog.name} on ${watchdog.interface}: suspendinging watchdog`, false);
                 plugin.App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.` }, plugin.id);
                 changeState(watchdog, 'suspended');
                 break;
               case 'suspended':
                 break;
               case 'stop': // Transition to 'stopped'
-                app.debug(`${watchdog.name} on ${watchdog.interface}: terminating watchdog`);
+                log.W(`${watchdog.name} on ${watchdog.interface}: terminating watchdog`, false);
                 plugin.App.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog on ${watchdog.interface}` }, plugin.id);
                 delete watchdog.restartCount;
                 changeState(watchdog, 'stopped')
