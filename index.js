@@ -251,9 +251,7 @@ module.exports = function(app) {
     router.get('/status', handleRoutes);
   }
 
-  plugin.getOpenApi = function() {
-    require("./resources/openApi.json");
-  }
+  plugin.getOpenApi = () => require("./resources/openApi.json");
 
   /********************************************************************
    * Change watchdog state and log state change to stateHistory. 
