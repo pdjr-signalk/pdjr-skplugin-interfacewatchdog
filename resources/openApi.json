@@ -16,10 +16,10 @@
   "paths": {
     "/status": {
       "get": {
-        "description": "Get a digest of reporting the status of all currently active\nwatchdogs.\n",
+        "description": "Get a digest reporting the status of all currently active\nwatchdogs.\n",
         "responses": {
           "200": {
-            "description": "Success.\nThe response body is an object containing status property \nobjects for each watchdog keyed by watchdog name.\n",
+            "description": "Success.\nThe response body is an object containing a status report\nobject for each watchdog keyed by watchdog name.\n",
             "content": {
               "application/json": {
                 "schema": {

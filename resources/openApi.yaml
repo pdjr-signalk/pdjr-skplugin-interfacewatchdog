@@ -19,14 +19,14 @@ paths:
   /status:
     get:
       description: |
-        Get a digest of reporting the status of all currently active
+        Get a digest reporting the status of all currently active
         watchdogs.
       responses:
         200:
           description: |
             Success.
-            The response body is an object containing status property 
-            objects for each watchdog keyed by watchdog name.
+            The response body is an object containing a status report
+            object for each watchdog keyed by watchdog name.
           content:
             application/json:
               schema:
