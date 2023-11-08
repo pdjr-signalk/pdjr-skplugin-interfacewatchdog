@@ -35,6 +35,15 @@ paths:
                   Bus0:
                     type: object
                     properties:
+                      interface:
+                        description: The interface monitored by this watchdog.
+                        type: string
+                        example: master
+                      threshold:
+                        description: The threshold in deltas/second.
+                        type: number
+                        minimum: 0
+                        example: 30
                       currentState:
                         description: The current state of this watchdog.
                         type: string
