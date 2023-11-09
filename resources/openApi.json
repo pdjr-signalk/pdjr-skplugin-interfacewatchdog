@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "HTTP API for pdjr-skplugin-interfacewatchdog",
+    "title": "pdjr-skplugin-interfacewatchdog API",
     "version": "1.0.0",
     "license": {
       "name": "Apache 2.0",
@@ -34,7 +34,7 @@
                           "example": "master"
                         },
                         "threshold": {
-                          "description": "The threshold in deltas/second.",
+                          "description": "The watchdog threshold in deltas/second.",
                           "type": "number",
                           "minimum": 0,
                           "example": 30
