@@ -1,12 +1,15 @@
 {
   "name": "pdjr-skplugin-interfacewatchdog",
   "version": "1.0.0",
-  "description": "Signal K interface activity watchdog",
-  "main": "index.js",
+  "description": "Monitor Signal K interfaces for anomalous drops in activity",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "signalk-plugin-enabled-by-default": true,
   "scripts": {
     "test": "echo \"Error: no test specified\"",
-    "publish": "yq -o=json -I=2 resources/openApi.yaml > resources/openApi.json"
+    "publish": "yq -o=json -I=2 resources/openApi.yaml > resources/openApi.json",
+    "build": "tsc",
+    "pack": "npm pack"
   },
   "repository": {
     "type": "git",
@@ -23,10 +26,12 @@
   },
   "homepage": "https://github.com/pdjr-signalk/pdjr-skplugin-interfacewatchdog#readme",
   "dependencies": {
-    "lodash": "^4.17.21",
-    "signalk-libapp": "github:pdjr-signalk/signalk-libapp",
-    "signalk-liblog": "github:pdjr-signalk/signalk-liblog"
+    "lodash": "^4.17.21"
   },
-  "directories": {
+  "directories": {},
+  "devDependencies": {
+    "@types/lodash": "^4.17.7",
+    "@types/node": "^22.5.5",
+    "typescript": "^5.6.2"
   }
 }
