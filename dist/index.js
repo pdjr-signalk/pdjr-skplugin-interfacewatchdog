@@ -239,7 +239,7 @@ module.exports = function (app) {
             router.get('/status', handleRoutes);
         },
         getOpenApi: function () {
-            return (require("../resources/openApi.json"));
+            return (() => require("../resources/openApi.json"));
         }
     };
     return plugin;

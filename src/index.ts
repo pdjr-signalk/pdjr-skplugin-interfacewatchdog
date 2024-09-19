@@ -247,7 +247,7 @@ module.exports = function(app: any) {
     },
 
     getOpenApi: function() { 
-      return(require("../resources/openApi.json"))
+      return(() => require("../resources/openApi.json"))
     }
 
   }
