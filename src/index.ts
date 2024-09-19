@@ -246,7 +246,7 @@ module.exports = function(app: any) {
       router.get('/status', handleRoutes)
     },
 
-    getOpenApi:  () => require("../resources/openApi.json")
+    getOpenApi: () => require("../resources/openApi.json")
 
   }
 
