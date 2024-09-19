@@ -74,7 +74,7 @@ const PLUGIN_SCHEMA = {
 const PLUGIN_UISCHEMA = {};
 module.exports = function (app) {
     let heartbeat = 0;
-    let shadowOptionsFilename = require('path').join(app.getDataDirPath(), 'shadow-options.json');
+    let shadowOptionsFilename = '';
     const plugin = {
         id: PLUGIN_ID,
         name: PLUGIN_NAME,
@@ -83,6 +83,7 @@ module.exports = function (app) {
         uiSchema: PLUGIN_UISCHEMA,
         options: {},
         start: function (options) {
+            shadowOptionsFilename = require('path').join(app.getDataDirPath(), 'shadow-options.json');
             if ((options.watchdogs) && (Array.isArray(options.watchdogs))) {
                 const interfaceNumbers = options.watchdogs.reduce((a, w) => { if (w.interface)
                     a[w.interface] = 0; return (a); }, {});
