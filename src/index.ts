@@ -76,7 +76,7 @@ const PLUGIN_UISCHEMA: any = {}
 module.exports = function(app: any) {
 
   let heartbeat: number = 0
-  let shadowOptionsFilename: string = require('path').join(app.getDataDirPath(), 'shadow-options.json')
+  let shadowOptionsFilename: string = ''
 
   const plugin: SKPlugin = {
 
@@ -88,6 +88,8 @@ module.exports = function(app: any) {
     options: {},
   
     start: function(options: any) {
+      shadowOptionsFilename = require('path').join(app.getDataDirPath(), 'shadow-options.json')
+
       if ((options.watchdogs) && (Array.isArray(options.watchdogs))) {
         const interfaceNumbers: Dictionary<number> = options.watchdogs.reduce((a: Dictionary<number>, w: Watchdog) => { if (w.interface) a[w.interface] = 0; return(a); }, {})
         plugin.options.watchdogs = options.watchdogs.reduce((a: Watchdog[], watchdog: Watchdog) => {
