@@ -238,7 +238,9 @@ module.exports = function (app) {
         registerWithRouter: function (router) {
             router.get('/status', handleRoutes);
         },
-        getOpenApi: () => require("../resources/openApi.json")
+        getOpenApi: function () {
+            return (() => require("../resources/openApi.json"));
+        }
     };
     return plugin;
     function changeState(watchdog, state) {
