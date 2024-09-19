@@ -246,9 +246,9 @@ module.exports = function(app: any) {
       router.get('/status', handleRoutes)
     },
 
-    getOpenApi: function() {
-      return(() => require("../resources/openApi.json"))
-    }
+    //getOpenApi: function() {
+      //return(() => require("../resources/openApi.json"))
+    //}
 
   }
 
@@ -311,7 +311,7 @@ interface SKPlugin {
   start: (options: any) => void,
   stop: () => void,
   registerWithRouter: (router: any) => void,
-  getOpenApi: any,
+  //getOpenApi: any,
 
   options: any
 }
