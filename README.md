@@ -10,18 +10,18 @@ throughput on an interface falls below some specified *threshold*
 rate.
 
 A sequence of contiguous exceptions is characterised as a *problem*
-and problems may result in the watchdog taking,a nd perhaps repeating,
+and problems may result in the watchdog taking, and perhaps repeating,
 some *action*.
 
-The sensitivity of a watchdog to exceptions can be configured and the appearance
-of a problem can be handled in a number of ways: it can be ignored (in
-which case monitoring continues), or the watchdog can be disabled,
-or the host Signal K server can be restarted in the hope that the
-problem can be corrected by a hard reset of the associated interface.
+The sensitivity of a watchdog to exceptions can be configured and the
+appearance of a problem can be handled in a number of ways: it can be 
+ignored (in which case monitoring continues), or the watchdog can be 
+disabled, or the host Signal K server can be restarted in the hope that
+the problem can be corrected by a hard reset of the associated interface.
 
-If server restarting is configured, the maximum number of allowed
-restarts can be limited to prevent a persistent loss of service
-resulting from runaway reboots on a dead interface.
+If server restarting is configured, the maximum number of allowed restarts
+can be limited to prevent a persistent loss of service resulting from
+runaway reboots on a dead interface.
 
 Each watchdog logs key events to the server log and issues Signal K
 notifications on its own notification key.
@@ -103,11 +103,11 @@ name (although it only makes sense if one *Watchdog* on a shared
 My ship has two NMEA busses bridged to a single Actisense interface
 called 'ngt-1'.
 
-Bus0 is my 'domestic' NMEA bus and is expected to be available 24/7.
+Bus 0 is my 'domestic' NMEA bus and is expected to be available 24/7.
 Typical throughput on 'ngt-1' with just this bus enabled is around 20
 deltas per second.
 
-Bus1 is my 'navigation' bus and is expected to be available when
+Bus 1 is my 'navigation' bus and is expected to be available when
 navigating.
 Typical throughput on 'ngt1' with both busses enabled is around 60
 deltas per second.
