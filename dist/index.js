@@ -141,7 +141,7 @@ module.exports = function (app) {
                 app.setPluginStatus(`watching interface${(interfaces.length == 1) ? '' : 's'} ${interfaces.join(', ')}`);
                 plugin.options.watchdogs.forEach((watchdog) => {
                     app.debug(`waiting for ${watchdog.name} on ${watchdog.interface} to become active`);
-                    app.notify(watchdog.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id);
+                    //app.notify(watchdog.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id)
                 });
                 // Register as a serverevent recipient - all substantive
                 // processing happens in the event handler.
