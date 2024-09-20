@@ -77,6 +77,7 @@ module.exports = function(app: any) {
 
   let heartbeat: number = 0
   let shadowOptionsFilename: string = ''
+  let shadowOptions: ShadowOptions = {}
 
   const plugin: SKPlugin = {
 
@@ -111,17 +112,20 @@ module.exports = function(app: any) {
       // in which case a number of dynamic properties will be passed
       // forwards through the shadow options file. Also take this
       // opportunity to initialise various properties.
-      var shadowOptions: any; 
       try {
         shadowOptions = require(shadowOptionsFilename);
       } catch(e) {
-        shadowOptions = { fileCreated: new Date().toString(), watchdogs: [] };
+        shadowOptions = { fileCreated: new Date().toISOString(), watchdogs: [] };
       }
+
       plugin.options.watchdogs = plugin.options.watchdogs.map((watchdog: Watchdog) => {
-        var shadowwatchdog: Watchdog = shadowOptions.watchdogs.reduce((a: Watchdog[], w: Watchdog) => ((w.name == watchdog.name)?w:a), {});
+        let watchdogShadowOptions: WatchdogShadowOptions =
+          (shadowOptions.watchdogs)
+          ?shadowOptions.watchdogs.reduce((a: WatchdogShadowOptions, w: WatchdogShadowOptions) => ((w.name == watchdog.name)?w:a), {})
+          :{};
         var combinedState = {
           ...{ problemsSinceFileCreation: 0 },
-          ...shadowwatchdog,
+          ...watchdogShadowOptions,
           ...{ exceptionCount: 0, problemCount: 0, problemsSinceLastRestart: 0, stateHistory: [] },
           ...watchdog
         };
@@ -140,10 +144,10 @@ module.exports = function(app: any) {
         // watchdog.
         let interfaces: string[] = _.sortedUniq(plugin.options.watchdogs.map((i: Watchdog) => (i.interface)))
         app.setPluginStatus(`watching interface${(interfaces.length == 1)?'':'s'} ${interfaces.join(', ')}`)
-        for (var watchdog of plugin.options.watchdogs) {
+        plugin.options.watchdogs.forEach((watchdog: Watchdog) => {
           app.debug(`waiting for ${watchdog.name} on ${watchdog.interface} to become active`)
           app.notify(watchdog.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id)
-        }
+        })
 
         // Register as a serverevent recipient - all substantive
         // processing happens in the event handler.
@@ -200,7 +204,7 @@ module.exports = function(app: any) {
                         watchdog.restartCount = (watchdog.restartCount)?(watchdog.restartCount + 1):1
                         app.debug(`${watchdog.name} on ${watchdog.interface}: througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`)
                         app.notify(watchdog.notificationPath, { state: 'alarm', method: [], message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}` }, plugin.id)
-                        setTimeout(() => { saveShadowOptions(shadowOptionsFilename, plugin.options.fileCreated, plugin.options.watchdogs); process.exit(); }, 1000)
+                        setTimeout(() => { saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs); process.exit(); }, 1000)
                       } else {
                         changeState(watchdog, 'suspend')
                       }
@@ -239,7 +243,7 @@ module.exports = function(app: any) {
     },
 
     stop: function() {
-      saveShadowOptions(shadowOptionsFilename, plugin.options.fileCreated, plugin.options.watchdogs);
+      saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs);
     },
 
     registerWithRouter: function(router) {
@@ -259,12 +263,19 @@ module.exports = function(app: any) {
     watchdog.stateHistory.push(`${(new Date()).toISOString().slice(0,19)} ${heartbeat} ${watchdog.exceptionCount} ${state}`)
   }
 
-  function saveShadowOptions(filename: string, created: string, watchdogs: Watchdog[]) {
-    var shadowStuff = {
-      fileCreated: created,
-      watchdogs: watchdogs.map((watchdog: Watchdog) => ({ name: watchdog.name, problemsSinceFileCreation: watchdog.problemsSinceFileCreation, problemsInLastSession: watchdog.problemsSinceLastRestart, restartCount: watchdog.restartCount }))
+  function saveShadowOptions(filename: string, watchdogs: Watchdog[]) {
+    var shadowOptions: ShadowOptions = {
+      fileCreated: (new Date()).toISOString(),
+      watchdogs: watchdogs.map((watchdog: Watchdog) => {
+        return({
+          name: watchdog.name,
+          problemsInLastSession: watchdog.problemsSinceLastRestart,
+          problemsSinceFileCreation: watchdog.problemsSinceFileCreation,
+          restartCount: watchdog.restartCount
+        })
+      })
     }
-    writeFileSync(filename, JSON.stringify(shadowStuff))
+    writeFileSync(filename, JSON.stringify(shadowOptions))
   }
 
   function handleRoutes(req: any, res: any) {
@@ -333,6 +344,18 @@ interface Watchdog {
   problemCount: number,
   problemsSinceLastRestart: number,
   problemsSinceFileCreation: number
+}
+
+interface WatchdogShadowOptions {
+  name?: string,
+  problemsInLastSession?: number,
+  problemsSinceFileCreation?: number,
+  restartCount?: number | undefined
+}
+
+interface ShadowOptions {
+  fileCreated?: string,
+  watchdogs?: WatchdogShadowOptions[]
 }
 
 interface Dictionary<T> {
