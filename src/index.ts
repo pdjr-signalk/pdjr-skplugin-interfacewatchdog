@@ -146,7 +146,8 @@ module.exports = function(app: any) {
         app.setPluginStatus(`watching interface${(interfaces.length == 1)?'':'s'} ${interfaces.join(', ')}`)
         plugin.options.watchdogs.forEach((watchdog: Watchdog) => {
           app.debug(`waiting for ${watchdog.name} on ${watchdog.interface} to become active`)
-          //app.notify(watchdog.notificationPath, { state: 'alert', method: [], message: 'Waiting for interface to become active' }, plugin.id)
+          console.log(watchdog.notificationPath, plugin.id);
+          app.notify(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active' }, plugin.id)
         })
 
         // Register as a serverevent recipient - all substantive
@@ -189,7 +190,7 @@ module.exports = function(app: any) {
                   break
                 case 'newly-normal': // Transition to 'normal'
                   app.debug(`${watchdog.name} on ${watchdog.interface}: throughput moved above threshold`)
-                  app.notify(watchdog.notificationPath, { state: 'normal', method: [], message: `Throughput on ${watchdog.interface} moved above threshold.` }, plugin.id)
+                  app.notify(watchdog.notificationPath, { state: 'normal', message: `Throughput on ${watchdog.interface} moved above threshold.` }, plugin.id)
                   changeState(watchdog, 'normal')
                   delete watchdog.restartCount
                   break
@@ -203,7 +204,7 @@ module.exports = function(app: any) {
                       if ((!watchdog.restartCount) || (watchdog.restartCount < (watchdog.stopActionThreshold - watchdog.startActionThreshold))) {
                         watchdog.restartCount = (watchdog.restartCount)?(watchdog.restartCount + 1):1
                         app.debug(`${watchdog.name} on ${watchdog.interface}: througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`)
-                        app.notify(watchdog.notificationPath, { state: 'alarm', method: [], message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}` }, plugin.id)
+                        app.notify(watchdog.notificationPath, { state: 'alarm', message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}` }, plugin.id)
                         setTimeout(() => { saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs); process.exit(); }, 1000)
                       } else {
                         changeState(watchdog, 'suspend')
@@ -220,14 +221,14 @@ module.exports = function(app: any) {
                   break;
                 case 'suspend': // Transition to 'suspended'
                   app.setPluginError(`${watchdog.name} on ${watchdog.interface}: suspending watchdog`)
-                  app.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.` }, plugin.id)
+                  app.notify(watchdog.notificationPath, { state: 'warn', message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.` }, plugin.id)
                   changeState(watchdog, 'suspended')
                   break
                 case 'suspended':
                   break
                 case 'stop': // Transition to 'stopped'
                   app.setPluginError(`${watchdog.name} on ${watchdog.interface}: terminating watchdog`, false)
-                  app.notify(watchdog.notificationPath, { state: 'warn', method: [], message: `Terminating watchdog on ${watchdog.interface}` }, plugin.id)
+                  app.notify(watchdog.notificationPath, { state: 'warn', message: `Terminating watchdog on ${watchdog.interface}` }, plugin.id)
                   delete watchdog.restartCount;
                   changeState(watchdog, 'stopped')
                   break;
