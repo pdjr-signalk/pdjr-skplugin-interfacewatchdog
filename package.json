@@ -27,7 +27,7 @@
   "homepage": "https://github.com/pdjr-signalk/pdjr-skplugin-interfacewatchdog#readme",
   "dependencies": {
     "lodash": "^4.17.21",
-    "signalk-libdelta": "github:pdjr-signalk/signalk-libdelta#typescript"
+    "signalk-libdelta": "github:pdjr-signalk/signalk-libdelta"
   },
   "directories": {},
   "devDependencies": {
