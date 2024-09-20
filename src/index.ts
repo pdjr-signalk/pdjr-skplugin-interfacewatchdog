@@ -244,11 +244,11 @@ module.exports = function(app: any) {
 
     stop: function() {
       saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs);
-    },
+    }
 
-    registerWithRouter: function(router) {
-      router.get('/status', handleRoutes)
-    },
+    //registerWithRouter: function(router) {
+    //  router.get('/status', handleRoutes)
+    //},
 
     //getOpenApi: function() {
       //return(() => require("../resources/openApi.json"))
@@ -321,7 +321,7 @@ interface SKPlugin {
 
   start: (options: any) => void,
   stop: () => void,
-  registerWithRouter: (router: any) => void,
+  //registerWithRouter: (router: any) => void,
   //getOpenApi: any,
 
   options: any

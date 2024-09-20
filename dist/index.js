@@ -236,10 +236,10 @@ module.exports = function (app) {
         },
         stop: function () {
             saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs);
-        },
-        registerWithRouter: function (router) {
-            router.get('/status', handleRoutes);
-        },
+        }
+        //registerWithRouter: function(router) {
+        //  router.get('/status', handleRoutes)
+        //},
         //getOpenApi: function() {
         //return(() => require("../resources/openApi.json"))
         //}
