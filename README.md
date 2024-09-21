@@ -62,7 +62,7 @@ threshold.
   <dd>
   <dt>Start taking action after this many problems <code>startActionThreshold</code></dt>
   <dd>
-    Optionally integer specifying the number of problems that can be
+    Optional integer specifying the number of problems that can be
     logged on *interface* before triggering the configured action (see
     below).
     A value of 0 says wait indefinitely and so disables the watchdog
