@@ -140,7 +140,7 @@ module.exports = function (app) {
                 // Report plugin status to dashboard and notify startup of each
                 // watchdog.
                 let interfaces = _.sortedUniq(plugin.options.watchdogs.map((i) => (i.interface)));
-                app.setPluginStatus(`watching interface${(interfaces.length == 1) ? '' : 's'} ${interfaces.join(', ')}`);
+                app.setPluginStatus(`Watching interface${(interfaces.length == 1) ? '' : 's'} ${interfaces.join(', ')}`);
                 plugin.options.watchdogs.forEach((watchdog) => {
                     app.debug(`waiting for ${watchdog.name} on ${watchdog.interface} to become active`);
                     delta.addValue(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active', method: [] }).commit().clear();
@@ -213,7 +213,7 @@ module.exports = function (app) {
                                     }
                                     break;
                                 case 'suspend': // Transition to 'suspended'
-                                    app.setPluginError(`${watchdog.name} on ${watchdog.interface}: suspending watchdog`);
+                                    app.debug(`${watchdog.name} on ${watchdog.interface}: suspending watchdog`);
                                     delta.addValue(watchdog.notificationPath, { state: 'warn', message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.`, method: [] }).commit().clear();
                                     changeState(watchdog, 'suspended');
                                     break;
@@ -233,7 +233,7 @@ module.exports = function (app) {
                 });
             }
             else {
-                app.setPluginError('stopped: no watchdogs are configured');
+                app.setPluginError('Stopped: no watchdogs are configured');
             }
         },
         stop: function () {
