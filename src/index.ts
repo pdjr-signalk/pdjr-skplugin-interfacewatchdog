@@ -144,8 +144,8 @@ module.exports = function(app: any) {
 
         // Report plugin status to dashboard and notify startup of each
         // watchdog.
-        let interfaces: string[] = _.sortedUniq(plugin.options.watchdogs.map((i: Watchdog) => (i.interface)))
-        app.setPluginStatus(`Watching interface${(interfaces.length == 1)?'':'s'} ${interfaces.join(', ')}`)
+        let interfaces: string[] = _.sortedUniq(plugin.options.watchdogs.map((i: Watchdog) => (i.name)))
+        app.setPluginStatus(`Started ${plugin.options.watchdogs.length} watchdog(s) on ${interfaces.length} interface(s)`)
         plugin.options.watchdogs.forEach((watchdog: Watchdog) => {
           app.debug(`waiting for ${watchdog.name} on ${watchdog.interface} to become active`)
           delta.addValue(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active', method: []}).commit().clear()
