@@ -190,7 +190,7 @@ module.exports = function(app: any) {
                 case 'starting':
                   break
                 case 'newly-normal': // Transition to 'normal'
-                  app.debug(`watchdog ${watchdog.name} on ${watchdog.interface}: throughput moved above threshold`)
+                  app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': throughput moved above threshold`)
                   delta.addValue(watchdog.notificationPath, { state: 'normal', message: `Throughput on ${watchdog.interface} moved above threshold.`, method: []}).commit().clear()
                   changeState(watchdog, 'normal')
                   delete watchdog.restartCount
@@ -204,7 +204,7 @@ module.exports = function(app: any) {
                     case 'restart-server':
                       if ((!watchdog.restartCount) || (watchdog.restartCount < (watchdog.stopActionThreshold - watchdog.startActionThreshold))) {
                         watchdog.restartCount = (watchdog.restartCount)?(watchdog.restartCount + 1):1
-                        app.debug(`watchdog ${watchdog.name} on ${watchdog.interface}: througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`)
+                        app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`)
                         delta.addValue(watchdog.notificationPath, { state: 'alarm', message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}`, method: []}).commit().clear()
                         setTimeout(() => { saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs); process.exit(); }, 1000)
                       } else {
@@ -221,14 +221,14 @@ module.exports = function(app: any) {
                   }
                   break;
                 case 'suspend': // Transition to 'suspended'
-                  app.debug(`watchdog ${watchdog.name} on ${watchdog.interface}: suspending watchdog`)
+                  app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': suspending watchdog`)
                   delta.addValue(watchdog.notificationPath, { state: 'warn', message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.`, method: []}).commit().clear()
                   changeState(watchdog, 'suspended')
                   break
                 case 'suspended':
                   break
                 case 'stop': // Transition to 'stopped'
-                  app.debug(`watchdog ${watchdog.name} on ${watchdog.interface}: terminating watchdog`, false)
+                  app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': terminating watchdog`, false)
                   delta.addValue(watchdog.notificationPath, { state: 'warn', message: `Terminating watchdog on ${watchdog.interface}`, method: []}).commit().clear()
                   delete watchdog.restartCount;
                   changeState(watchdog, 'stopped')
