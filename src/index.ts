@@ -324,7 +324,7 @@ interface SKPlugin {
   start: (options: any) => void,
   stop: () => void,
   registerWithRouter: (router: any) => void,
-  getOpenApi: any,
+  getOpenApi: () => string,
 
   options: any
 }
