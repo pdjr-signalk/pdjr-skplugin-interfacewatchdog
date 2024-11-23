@@ -253,7 +253,7 @@ module.exports = function(app: any) {
     },
 
     getOpenApi: function() {
-      return(require("openApi.json"));
+      return(require("./openApi.json"));
     }
 
   }
