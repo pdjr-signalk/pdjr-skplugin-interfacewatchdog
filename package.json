@@ -6,10 +6,9 @@
   "types": "dist/index.d.ts",
   "signalk-plugin-enabled-by-default": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\"",
-    "publish": "yq -o=json -I=2 resources/openApi.yaml > resources/openApi.json",
-    "build": "tsc",
-    "pack": "npm pack"
+    "make": "yq -o=json -I=2 src/openApi.yaml > dist/openApi.json && npm install && tsc",
+    "pack": "npm pack",
+    "clean": "rm -rf node_modules package-lock.json *.tgz"
   },
   "repository": {
     "type": "git",
