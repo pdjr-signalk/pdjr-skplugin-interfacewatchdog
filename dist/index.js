@@ -18,6 +18,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = require("fs");
 const _ = require("lodash");
 const signalk_libdelta_1 = require("signalk-libdelta");
+const signalk_libpluginstatus_1 = require("signalk-libpluginstatus");
+const DEFAULT_THRESHOLD = 0;
+const DEFAULT_START_ACTION_THRESHOLD = 3;
+const DEFAULT_STOP_ACTION_THRESHOLD_OFFSET = 3;
+const DEFAULT_ACTION = 'none';
+const SHADOW_OPTIONS_FILENAME = 'shadow-options.json';
 const PLUGIN_ID = 'interfacewatchdog';
 const PLUGIN_NAME = 'pdjr-skplugin-interfacewatchdog';
 const PLUGIN_DESCRIPTION = 'Monitor Signal K interfaces for anomalous drops in activity';
@@ -74,6 +80,7 @@ const PLUGIN_SCHEMA = {
 };
 const PLUGIN_UISCHEMA = {};
 module.exports = function (app) {
+    var pluginConfiguration = {};
     let heartbeat = 0;
     let shadowOptionsFilename = '';
     let shadowOptions = {};
@@ -85,155 +92,38 @@ module.exports = function (app) {
         uiSchema: PLUGIN_UISCHEMA,
         options: {},
         start: function (options) {
-            shadowOptionsFilename = require('path').join(app.getDataDirPath(), 'shadow-options.json');
-            let delta = new signalk_libdelta_1.Delta(app, plugin.id);
-            if ((options.watchdogs) && (Array.isArray(options.watchdogs))) {
-                const interfaceNumbers = options.watchdogs.reduce((a, w) => { if (w.interface)
-                    a[w.interface] = 0; return (a); }, {});
-                plugin.options.watchdogs = options.watchdogs.reduce((a, watchdog) => {
-                    try {
-                        var retval = { ...plugin.schema.properties.watchdogs.items.default, ...watchdog };
-                        retval.name = (watchdog.name) ? watchdog.name : `${watchdog.interface}-${interfaceNumbers[watchdog.interface]++}`;
-                        retval.stopActionThreshold = (watchdog.stopActionThreshold) ? watchdog.stopActionThreshold : (retval.startActionThreshold + 3);
-                        retval.notificationPath = (watchdog.notificationPath) ? (watchdog.notificationPath) : `notifications.plugins.${plugin.id}.watchdogs.${retval.name}`;
-                        if (!retval.interface)
-                            throw new Error("required property 'interface' is missing");
-                        if (!plugin.schema.properties.watchdogs.items.properties.action.enum.includes(retval.action))
-                            throw new Error("property 'action' is invalid");
-                        if (retval.startActionThreshold <= 0)
-                            throw new Error("startActionThreshold is 0");
-                        a.push(retval);
-                    }
-                    catch (e) {
-                        app.debug(`dropping watchdog '${watchdog.name}' (${e.message})`);
-                    }
-                    return (a);
-                }, []);
-            }
-            // We might be starting up in the middle of a restart sequence,
-            // in which case a number of dynamic properties will be passed
-            // forwards through the shadow options file. Also take this
-            // opportunity to initialise various properties.
+            var delta = new signalk_libdelta_1.Delta(app, plugin.id);
+            var pluginStatus = new signalk_libpluginstatus_1.PluginStatus(app, '');
             try {
-                shadowOptions = require(shadowOptionsFilename);
+                pluginConfiguration = makePluginConfiguration(options);
+                app.debug(`using plugin configuration ${JSON.stringify(pluginConfiguration, null, 2)}`);
+                // We might be starting up in the middle of a restart sequence,
+                // in which case a number of dynamic properties will be passed
+                // forwards through the shadow options file. Also take this
+                // opportunity to initialise various properties.
+                let shadowOptionsFilename = require('path').join(app.getDataDirPath(), SHADOW_OPTIONS_FILENAME);
+                pluginConfiguration = updatePluginConfigurationFromShadowOptions(pluginConfiguration, shadowOptionsFilename);
+                // Set the initial state of each watchdog.
+                pluginConfiguration.watchdogs.forEach((watchdog) => { changeState(watchdog, 'starting'); });
+                // If we have some enabled watchdogs then go into production.
+                if (pluginConfiguration.watchdogs.length > 0) {
+                    // Report plugin status to dashboard and notify startup of each
+                    // watchdog.
+                    let interfaces = _.sortedUniq(pluginConfiguration.watchdogs.map((i) => (i.name)));
+                    pluginStatus.setDefaultStatus(`Started: ${pluginConfiguration.watchdogs.length} watchdog(s) on ${interfaces.length} interface(s)`);
+                    plugin.options.watchdogs.forEach((watchdog) => {
+                        app.debug(`watchdog '${watchdog.name}' is waiting for interface '${watchdog.interface}' to become active`);
+                        delta.addValue(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active', method: [] }).commit().clear();
+                    });
+                    app.on('serverevent', (e) => { serverEventHandler(pluginConfiguration, e); });
+                }
+                else {
+                    pluginStatus.setDefaultStatus('Stopped: no valid watchdog configurations');
+                }
             }
             catch (e) {
-                shadowOptions = { fileCreated: new Date().toISOString(), watchdogs: [] };
-            }
-            plugin.options.watchdogs = plugin.options.watchdogs.map((watchdog) => {
-                let watchdogShadowOptions = (shadowOptions.watchdogs)
-                    ? shadowOptions.watchdogs.reduce((a, w) => ((w.name == watchdog.name) ? w : a), {})
-                    : {};
-                var combinedState = {
-                    ...{ problemsSinceFileCreation: 0 },
-                    ...watchdogShadowOptions,
-                    ...{ exceptionCount: 0, problemCount: 0, problemsSinceLastRestart: 0, stateHistory: [] },
-                    ...watchdog
-                };
-                return (combinedState);
-            });
-            // Set the initial state of each watchdog.
-            plugin.options.watchdogs.forEach((watchdog) => { changeState(watchdog, 'starting'); });
-            app.debug(`using configuration: ${JSON.stringify(plugin.options, null, 2)}`);
-            // If we have some enabled watchdogs then go into production.
-            if (plugin.options.watchdogs.length > 0) {
-                // Report plugin status to dashboard and notify startup of each
-                // watchdog.
-                let interfaces = _.sortedUniq(plugin.options.watchdogs.map((i) => (i.name)));
-                app.setPluginStatus(`Started ${plugin.options.watchdogs.length} watchdog(s) on ${interfaces.length} interface(s)`);
-                plugin.options.watchdogs.forEach((watchdog) => {
-                    app.debug(`watchdog '${watchdog.name}' is waiting for interface '${watchdog.interface}' to become active`);
-                    delta.addValue(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active', method: [] }).commit().clear();
-                });
-                // Register as a serverevent recipient - all substantive
-                // processing happens in the event handler.
-                app.on('serverevent', (e) => {
-                    if ((e.type) && (e.type == "SERVERSTATISTICS")) {
-                        heartbeat++;
-                        // Get system throughput statistic for all interfaces that
-                        // are associated with a watchdog.
-                        const interfaceThroughputs = Object.keys(e.data.providerStatistics)
-                            .filter((key) => plugin.options.watchdogs.map((watchdog) => watchdog.interface).includes(key))
-                            .reduce((a, key) => { a[key] = e.data.providerStatistics[key].deltaRate; return (a); }, {});
-                        //app.debug(`interface throughputs: ${JSON.stringify(interfaceThroughputs)}`)
-                        // Iterate over configured watchdogs.
-                        for (var i = plugin.options.watchdogs.length - 1; i >= 0; i--) {
-                            var watchdog = plugin.options.watchdogs[i];
-                            var throughput = (interfaceThroughputs[watchdog.interface]) ? interfaceThroughputs[watchdog.interface] : 0;
-                            // Count consecutive throughput exceptions and transition the
-                            // watchdog state to 'problem' if actionThreshold is reached
-                            // or to 'newly-normal' when a non-exception occurs. We use
-                            // newly-normal so that the state change can be logged once
-                            // before the immediate transition to 'normal'.
-                            if (throughput <= watchdog.threshold) {
-                                watchdog.exceptionCount++;
-                                if ((watchdog.exceptionCount == watchdog.startActionThreshold) && (!watchdog.state.startsWith('stop')))
-                                    watchdog.state = 'problem';
-                            }
-                            else {
-                                watchdog.exceptionCount = 0;
-                                if (watchdog.state != 'normal')
-                                    watchdog.state = 'newly-normal';
-                            }
-                            //app.debug(JSON.stringify(watchdog));
-                            // Operate the state machine.
-                            switch (watchdog.state) {
-                                case 'starting':
-                                    break;
-                                case 'newly-normal': // Transition to 'normal'
-                                    app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': throughput moved above threshold`);
-                                    delta.addValue(watchdog.notificationPath, { state: 'normal', message: `Throughput on ${watchdog.interface} moved above threshold.`, method: [] }).commit().clear();
-                                    changeState(watchdog, 'normal');
-                                    delete watchdog.restartCount;
-                                    break;
-                                case 'normal':
-                                    break;
-                                case 'problem':
-                                    watchdog.problemCount++;
-                                    watchdog.problemsSinceFileCreation++;
-                                    switch (watchdog.action) {
-                                        case 'restart-server':
-                                            if ((!watchdog.restartCount) || (watchdog.restartCount < (watchdog.stopActionThreshold - watchdog.startActionThreshold))) {
-                                                watchdog.restartCount = (watchdog.restartCount) ? (watchdog.restartCount + 1) : 1;
-                                                app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`);
-                                                delta.addValue(watchdog.notificationPath, { state: 'alarm', message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}`, method: [] }).commit().clear();
-                                                setTimeout(() => { saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs); process.exit(); }, 1000);
-                                            }
-                                            else {
-                                                changeState(watchdog, 'suspend');
-                                            }
-                                            break;
-                                        case 'stop-watchdog':
-                                            changeState(watchdog, 'stop');
-                                            break;
-                                        case 'suspend-watchdog':
-                                            watchdog.state = 'suspend';
-                                        default:
-                                            break;
-                                    }
-                                    break;
-                                case 'suspend': // Transition to 'suspended'
-                                    app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': suspending watchdog`);
-                                    delta.addValue(watchdog.notificationPath, { state: 'warn', message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.`, method: [] }).commit().clear();
-                                    changeState(watchdog, 'suspended');
-                                    break;
-                                case 'suspended':
-                                    break;
-                                case 'stop': // Transition to 'stopped'
-                                    app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': terminating watchdog`, false);
-                                    delta.addValue(watchdog.notificationPath, { state: 'warn', message: `Terminating watchdog on ${watchdog.interface}`, method: [] }).commit().clear();
-                                    delete watchdog.restartCount;
-                                    changeState(watchdog, 'stopped');
-                                    break;
-                                case 'stopped':
-                                    break;
-                            }
-                        }
-                    }
-                });
-            }
-            else {
-                app.setPluginStatus('Stopped: no watchdogs are configured');
+                pluginStatus.setDefaultStatus('Stopped: bad or missing plugin configuration');
+                app.setPluginError(e.message);
             }
         },
         stop: function () {
@@ -246,7 +136,139 @@ module.exports = function (app) {
             return (require("./openApi.json"));
         }
     };
-    return plugin;
+    function makePluginConfiguration(options) {
+        const interfaceNumbers = options.watchdogs.reduce((a, w) => { if (w.interface)
+            a[w.interface] = 0; return (a); }, {});
+        var pluginConfiguration = {
+            watchdogs: options.watchdogs.reduce((a, watchdogOptions) => {
+                try {
+                    if (!watchdogOptions.interface)
+                        throw new Error('missing \'interface\' property');
+                    var watchdog = {};
+                    watchdog.name = watchdogOptions.name || `${watchdogOptions.interface}-${interfaceNumbers[watchdogOptions.interface]++}`;
+                    watchdog.interface = watchdogOptions.interface;
+                    watchdog.threshold = watchdogOptions.threshold || DEFAULT_THRESHOLD;
+                    watchdog.startActionThreshold = watchdogOptions.startActionThreshold || DEFAULT_START_ACTION_THRESHOLD;
+                    watchdog.stopActionThreshold = watchdogOptions.stopActionThreshold || (watchdog.startActionThreshold + DEFAULT_STOP_ACTION_THRESHOLD_OFFSET);
+                    watchdog.action = watchdogOptions.action || DEFAULT_ACTION;
+                    watchdog.notificationPath = watchdogOptions.notificationPath || `notifications.plugins.${plugin.id}.watchdogs.${watchdog.name}`;
+                    a.push(watchdog);
+                }
+                catch (e) {
+                    app.debug(`ignoring watchdog with ${e.message}`);
+                }
+                return (a);
+            }, [])
+        };
+        return (pluginConfiguration);
+    }
+    function updatePluginConfigurationFromShadowOptions(pluginConfiguration, shadowOptionsFilename) {
+        var shadowOptions;
+        try {
+            shadowOptions = require(shadowOptionsFilename);
+        }
+        catch (e) {
+            shadowOptions = { fileCreated: new Date().toISOString(), watchdogs: [] };
+        }
+        pluginConfiguration.watchdogs = pluginConfiguration.watchdogs.map((watchdog) => {
+            let watchdogShadowOptions = (shadowOptions.watchdogs)
+                ? shadowOptions.watchdogs.reduce((a, w) => ((w.name == watchdog.name) ? w : a), {})
+                : {};
+            var updatedWatchdog = {
+                ...{ problemsSinceFileCreation: 0 },
+                ...watchdogShadowOptions,
+                ...{ exceptionCount: 0, problemCount: 0, problemsSinceLastRestart: 0, stateHistory: [] },
+                ...watchdog
+            };
+            return (updatedWatchdog);
+        });
+        return (pluginConfiguration);
+    }
+    function serverEventHandler(pluginConfiguration, e) {
+        var delta = new signalk_libdelta_1.Delta(app, plugin.id);
+        if ((e.type) && (e.type == "SERVERSTATISTICS")) {
+            app.heartbeat++;
+            // Get system throughput statistic for all interfaces that
+            // are associated with a watchdog.
+            const interfaceThroughputs = Object.keys(e.data.providerStatistics)
+                .filter((key) => pluginConfiguration.watchdogs.map((watchdog) => watchdog.interface).includes(key))
+                .reduce((a, key) => { a[key] = e.data.providerStatistics[key].deltaRate; return (a); }, {});
+            //app.debug(`interface throughputs: ${JSON.stringify(interfaceThroughputs)}`)
+            // Iterate over configured watchdogs.
+            for (var i = pluginConfiguration.watchdogs.length - 1; i >= 0; i--) {
+                var watchdog = pluginConfiguration.watchdogs[i];
+                var throughput = (interfaceThroughputs[watchdog.interface]) ? interfaceThroughputs[watchdog.interface] : 0;
+                // Count consecutive throughput exceptions and transition the
+                // watchdog state to 'problem' if actionThreshold is reached
+                // or to 'newly-normal' when a non-exception occurs. We use
+                // newly-normal so that the state change can be logged once
+                // before the immediate transition to 'normal'.
+                if (throughput <= watchdog.threshold) {
+                    watchdog.exceptionCount++;
+                    if ((watchdog.exceptionCount == watchdog.startActionThreshold) && (!watchdog.state.startsWith('stop')))
+                        watchdog.state = 'problem';
+                }
+                else {
+                    watchdog.exceptionCount = 0;
+                    if (watchdog.state != 'normal')
+                        watchdog.state = 'newly-normal';
+                }
+                //app.debug(JSON.stringify(watchdog));
+                // Operate the state machine.
+                switch (watchdog.state) {
+                    case 'starting':
+                        break;
+                    case 'newly-normal': // Transition to 'normal'
+                        app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': throughput moved above threshold`);
+                        delta.addValue(watchdog.notificationPath, { state: 'normal', message: `Throughput on ${watchdog.interface} moved above threshold.`, method: [] }).commit().clear();
+                        changeState(watchdog, 'normal');
+                        delete watchdog.restartCount;
+                        break;
+                    case 'normal':
+                        break;
+                    case 'problem':
+                        watchdog.problemCount++;
+                        watchdog.problemsSinceFileCreation++;
+                        switch (watchdog.action) {
+                            case 'restart-server':
+                                if ((!watchdog.restartCount) || (watchdog.restartCount < (watchdog.stopActionThreshold - watchdog.startActionThreshold))) {
+                                    watchdog.restartCount = (watchdog.restartCount) ? (watchdog.restartCount + 1) : 1;
+                                    app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`);
+                                    delta.addValue(watchdog.notificationPath, { state: 'alarm', message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}`, method: [] }).commit().clear();
+                                    setTimeout(() => { saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs); process.exit(); }, 1000);
+                                }
+                                else {
+                                    changeState(watchdog, 'suspend');
+                                }
+                                break;
+                            case 'stop-watchdog':
+                                changeState(watchdog, 'stop');
+                                break;
+                            case 'suspend-watchdog':
+                                watchdog.state = 'suspend';
+                            default:
+                                break;
+                        }
+                        break;
+                    case 'suspend': // Transition to 'suspended'
+                        app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': suspending watchdog`);
+                        delta.addValue(watchdog.notificationPath, { state: 'warn', message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.`, method: [] }).commit().clear();
+                        changeState(watchdog, 'suspended');
+                        break;
+                    case 'suspended':
+                        break;
+                    case 'stop': // Transition to 'stopped'
+                        app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': terminating watchdog`, false);
+                        delta.addValue(watchdog.notificationPath, { state: 'warn', message: `Terminating watchdog on ${watchdog.interface}`, method: [] }).commit().clear();
+                        delete watchdog.restartCount;
+                        changeState(watchdog, 'stopped');
+                        break;
+                    case 'stopped':
+                        break;
+                }
+            }
+        }
+    }
     function changeState(watchdog, state) {
         watchdog.state = state;
         watchdog.stateHistory.push(`${(new Date()).toISOString().slice(0, 19)} ${heartbeat} ${watchdog.exceptionCount} ${state}`);
@@ -296,4 +318,5 @@ module.exports = function (app) {
             return (false);
         }
     }
+    return plugin;
 };
