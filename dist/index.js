@@ -83,7 +83,6 @@ module.exports = function (app) {
     var pluginConfiguration = {};
     let heartbeat = 0;
     let shadowOptionsFilename = '';
-    let shadowOptions = {};
     const plugin = {
         id: PLUGIN_ID,
         name: PLUGIN_NAME,
@@ -111,7 +110,7 @@ module.exports = function (app) {
                     // watchdog.
                     let interfaces = _.sortedUniq(pluginConfiguration.watchdogs.map((i) => (i.name)));
                     pluginStatus.setDefaultStatus(`Started: ${pluginConfiguration.watchdogs.length} watchdog(s) on ${interfaces.length} interface(s)`);
-                    plugin.options.watchdogs.forEach((watchdog) => {
+                    pluginConfiguration.watchdogs.forEach((watchdog) => {
                         app.debug(`watchdog '${watchdog.name}' is waiting for interface '${watchdog.interface}' to become active`);
                         delta.addValue(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active', method: [] }).commit().clear();
                     });

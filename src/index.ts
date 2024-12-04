@@ -83,10 +83,8 @@ const PLUGIN_UISCHEMA: any = {}
 
 module.exports = function(app: any) {
   var pluginConfiguration: PluginConfiguration = <PluginConfiguration>{};
-
-  let heartbeat: number = 0
-  let shadowOptionsFilename: string = ''
-  let shadowOptions: ShadowOptions = {}
+  let heartbeat: number = 0;
+  let shadowOptionsFilename: string = '';
 
   const plugin: SKPlugin = {
 
@@ -122,7 +120,7 @@ module.exports = function(app: any) {
           // watchdog.
           let interfaces: string[] = _.sortedUniq(pluginConfiguration.watchdogs.map((i: Watchdog) => (i.name)));
           pluginStatus.setDefaultStatus(`Started: ${pluginConfiguration.watchdogs.length} watchdog(s) on ${interfaces.length} interface(s)`);
-          plugin.options.watchdogs.forEach((watchdog: Watchdog) => {
+          pluginConfiguration.watchdogs.forEach((watchdog: Watchdog) => {
             app.debug(`watchdog '${watchdog.name}' is waiting for interface '${watchdog.interface}' to become active`)
             delta.addValue(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active', method: []}).commit().clear()
           })
