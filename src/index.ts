@@ -116,8 +116,8 @@ module.exports = function(app: any) {
           let interfaces: string[] = _.sortedUniq(pluginConfiguration.watchdogs.map((i: Watchdog) => (i.name)));
           pluginStatus.setDefaultStatus(`Started: ${pluginConfiguration.watchdogs.length} watchdog(s) on ${interfaces.length} interface(s)`);
           pluginConfiguration.watchdogs.forEach((watchdog: Watchdog) => {
-            app.debug(`watchdog '${watchdog.name}' is waiting for interface '${watchdog.interface}' to become active`)
-            delta.addValue(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active', method: []}).commit().clear()
+            app.debug(`watchdog '${watchdog.name}': waiting for interface '${watchdog.interface}' to become active`);
+            delta.addValue(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active', method: []}).commit().clear();
           })
 
           app.on('serverevent', (e: any) => { serverEventHandler(pluginConfiguration, e); });
@@ -232,21 +232,21 @@ module.exports = function(app: any) {
           case 'starting':
             break
           case 'newly-normal': // Transition to 'normal'
-            app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': throughput moved above threshold`)
+            app.debug(`watchdog '${watchdog.name}': throughput on interface '${watchdog.interface}' has moved above threshold`)
             delta.addValue(watchdog.notificationPath, { state: 'normal', message: `Throughput on ${watchdog.interface} moved above threshold.`, method: []}).commit().clear()
-            changeState(watchdog, 'normal')
-            delete watchdog.restartCount
+            changeState(watchdog, 'normal');
+            delete watchdog.restartCount;
             break
           case 'normal':
             break
           case 'problem':
-            watchdog.problemCount++
-            watchdog.problemsSinceFileCreation++
+            watchdog.problemCount++;
+            watchdog.problemsSinceFileCreation++;
             switch (watchdog.action) {
               case 'restart-server':
                 if ((!watchdog.restartCount) || (watchdog.restartCount < (watchdog.stopActionThreshold - watchdog.startActionThreshold))) {
                   watchdog.restartCount = (watchdog.restartCount)?(watchdog.restartCount + 1):1
-                  app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`)
+                  app.debug(`watchdog '${watchdog.name}': throughput on interface '${watchdog.interface}' is persistently below threshold - triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`);
                   delta.addValue(watchdog.notificationPath, { state: 'alarm', message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}`, method: []}).commit().clear()
                   setTimeout(() => { saveShadowOptions(shadowOptionsFilename, pluginConfiguration.watchdogs); process.exit(); }, 1000)
                 } else {
@@ -263,14 +263,14 @@ module.exports = function(app: any) {
             }
             break;
           case 'suspend': // Transition to 'suspended'
-            app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': suspending watchdog`)
+            app.debug(`watchdog '${watchdog.name}': throughput on '${watchdog.interface}' is below threshold - suspending watchdog`)
             delta.addValue(watchdog.notificationPath, { state: 'warn', message: `Suspending watchdog until ${watchdog.interface} throughput rises above threshold.`, method: []}).commit().clear()
             changeState(watchdog, 'suspended')
             break
           case 'suspended':
             break
           case 'stop': // Transition to 'stopped'
-            app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': terminating watchdog`, false)
+            app.debug(`watchdog '${watchdog.name}': interface '${watchdog.interface}' is dead - terminating watchdog`, false)
             delta.addValue(watchdog.notificationPath, { state: 'warn', message: `Terminating watchdog on ${watchdog.interface}`, method: []}).commit().clear()
             delete watchdog.restartCount;
             changeState(watchdog, 'stopped')
