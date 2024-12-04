@@ -23,6 +23,7 @@ const DEFAULT_THRESHOLD: number = 0;
 const DEFAULT_START_ACTION_THRESHOLD: number = 3;
 const DEFAULT_STOP_ACTION_THRESHOLD_OFFSET = 3;
 const DEFAULT_ACTION: string = 'none';
+
 const SHADOW_OPTIONS_FILENAME = 'shadow-options.json';
 
 const PLUGIN_ID: string = 'interfacewatchdog'
@@ -69,11 +70,6 @@ const PLUGIN_SCHEMA: any = {
           },
         },
         "required": [ "interface" ],
-        "default": { 
-          "threshold": 0,
-          "startActionThreshold": 3,
-          "action": "none"
-        }
       }
     }
   },
@@ -93,7 +89,6 @@ module.exports = function(app: any) {
     description: PLUGIN_DESCRIPTION,
     schema: PLUGIN_SCHEMA,
     uiSchema: PLUGIN_UISCHEMA,
-    options: {},
   
     start: function(options: any) {
       var delta = new Delta(app, plugin.id)
@@ -136,7 +131,7 @@ module.exports = function(app: any) {
     },
 
     stop: function() {
-      saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs);
+      saveShadowOptions(shadowOptionsFilename, pluginConfiguration.watchdogs);
     },
 
     registerWithRouter: function(router) {
@@ -253,7 +248,7 @@ module.exports = function(app: any) {
                   watchdog.restartCount = (watchdog.restartCount)?(watchdog.restartCount + 1):1
                   app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`)
                   delta.addValue(watchdog.notificationPath, { state: 'alarm', message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}`, method: []}).commit().clear()
-                  setTimeout(() => { saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs); process.exit(); }, 1000)
+                  setTimeout(() => { saveShadowOptions(shadowOptionsFilename, pluginConfiguration.watchdogs); process.exit(); }, 1000)
                 } else {
                   changeState(watchdog, 'suspend')
                 }
@@ -312,7 +307,7 @@ module.exports = function(app: any) {
     try {
       switch (req.path.slice(0, (req.path.indexOf('/', 1) == -1)?undefined:req.path.indexOf('/', 1))) {
         case '/status':
-          const status = plugin.options.watchdogs.reduce((a: any, watchdog: Watchdog) => {
+          const status = pluginConfiguration.watchdogs.reduce((a: any, watchdog: Watchdog) => {
             a[watchdog.name] = {
               interface: watchdog.interface,
               threshold: watchdog.threshold,
@@ -354,8 +349,6 @@ interface SKPlugin {
   stop: () => void,
   registerWithRouter: (router: any) => void,
   getOpenApi: () => string,
-
-  options: any
 }
 
 interface PluginConfiguration {

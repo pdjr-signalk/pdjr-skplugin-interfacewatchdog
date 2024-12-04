@@ -68,11 +68,6 @@ const PLUGIN_SCHEMA = {
                     },
                 },
                 "required": ["interface"],
-                "default": {
-                    "threshold": 0,
-                    "startActionThreshold": 3,
-                    "action": "none"
-                }
             }
         }
     },
@@ -89,7 +84,6 @@ module.exports = function (app) {
         description: PLUGIN_DESCRIPTION,
         schema: PLUGIN_SCHEMA,
         uiSchema: PLUGIN_UISCHEMA,
-        options: {},
         start: function (options) {
             var delta = new signalk_libdelta_1.Delta(app, plugin.id);
             var pluginStatus = new signalk_libpluginstatus_1.PluginStatus(app, '');
@@ -126,7 +120,7 @@ module.exports = function (app) {
             }
         },
         stop: function () {
-            saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs);
+            saveShadowOptions(shadowOptionsFilename, pluginConfiguration.watchdogs);
         },
         registerWithRouter: function (router) {
             router.get('/status', handleRoutes);
@@ -234,7 +228,7 @@ module.exports = function (app) {
                                     watchdog.restartCount = (watchdog.restartCount) ? (watchdog.restartCount + 1) : 1;
                                     app.debug(`watchdog '${watchdog.name}' on '${watchdog.interface}': througput persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}.`);
                                     delta.addValue(watchdog.notificationPath, { state: 'alarm', message: `Throughput on ${watchdog.interface} persistently below threshold: triggering restart ${watchdog.restartCount} of ${watchdog.stopActionThreshold - watchdog.startActionThreshold}`, method: [] }).commit().clear();
-                                    setTimeout(() => { saveShadowOptions(shadowOptionsFilename, plugin.options.watchdogs); process.exit(); }, 1000);
+                                    setTimeout(() => { saveShadowOptions(shadowOptionsFilename, pluginConfiguration.watchdogs); process.exit(); }, 1000);
                                 }
                                 else {
                                     changeState(watchdog, 'suspend');
@@ -291,7 +285,7 @@ module.exports = function (app) {
         try {
             switch (req.path.slice(0, (req.path.indexOf('/', 1) == -1) ? undefined : req.path.indexOf('/', 1))) {
                 case '/status':
-                    const status = plugin.options.watchdogs.reduce((a, watchdog) => {
+                    const status = pluginConfiguration.watchdogs.reduce((a, watchdog) => {
                         a[watchdog.name] = {
                             interface: watchdog.interface,
                             threshold: watchdog.threshold,
