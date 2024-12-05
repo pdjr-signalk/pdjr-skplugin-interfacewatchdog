@@ -78,9 +78,9 @@ const PLUGIN_SCHEMA: any = {
 const PLUGIN_UISCHEMA: any = {}
 
 module.exports = function(app: any) {
-  var pluginConfiguration: PluginConfiguration = <PluginConfiguration>{};
-  let heartbeat: number = 0;
-  let shadowOptionsFilename: string = '';
+  var shadowOptionsFilename: string;
+  var pluginConfiguration: PluginConfiguration;
+  var heartbeat: number = 0;
 
   const plugin: SKPlugin = {
 
@@ -102,7 +102,7 @@ module.exports = function(app: any) {
         // in which case a number of dynamic properties will be passed
         // forwards through the shadow options file. Also take this
         // opportunity to initialise various properties.
-        let shadowOptionsFilename = require('path').join(app.getDataDirPath(), SHADOW_OPTIONS_FILENAME);
+        shadowOptionsFilename = require('path').join(app.getDataDirPath(), SHADOW_OPTIONS_FILENAME);
         pluginConfiguration = updatePluginConfigurationFromShadowOptions(pluginConfiguration, shadowOptionsFilename);
 
         // Set the initial state of each watchdog.
@@ -114,7 +114,7 @@ module.exports = function(app: any) {
           // Report plugin status to dashboard and notify startup of each
           // watchdog.
           let interfaces: string[] = _.sortedUniq(pluginConfiguration.watchdogs.map((i: Watchdog) => (i.name)));
-          pluginStatus.setDefaultStatus(`Started: ${pluginConfiguration.watchdogs.length} watchdog(s) on ${interfaces.length} interface(s)`);
+          pluginStatus.setDefaultStatus(`Running ${pluginConfiguration.watchdogs.length} watchdog${(pluginConfiguration.watchdogs.length == 1)?'':'s'} on ${interfaces.length} interface${(interfaces.length)?'':'s'}`);
           pluginConfiguration.watchdogs.forEach((watchdog: Watchdog) => {
             app.debug(`watchdog '${watchdog.name}': waiting for interface '${watchdog.interface}' to become active`);
             delta.addValue(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active', method: []}).commit().clear();

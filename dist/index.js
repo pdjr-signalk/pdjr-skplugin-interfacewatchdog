@@ -75,9 +75,9 @@ const PLUGIN_SCHEMA = {
 };
 const PLUGIN_UISCHEMA = {};
 module.exports = function (app) {
-    var pluginConfiguration = {};
-    let heartbeat = 0;
-    let shadowOptionsFilename = '';
+    var shadowOptionsFilename;
+    var pluginConfiguration;
+    var heartbeat = 0;
     const plugin = {
         id: PLUGIN_ID,
         name: PLUGIN_NAME,
@@ -94,7 +94,7 @@ module.exports = function (app) {
                 // in which case a number of dynamic properties will be passed
                 // forwards through the shadow options file. Also take this
                 // opportunity to initialise various properties.
-                let shadowOptionsFilename = require('path').join(app.getDataDirPath(), SHADOW_OPTIONS_FILENAME);
+                shadowOptionsFilename = require('path').join(app.getDataDirPath(), SHADOW_OPTIONS_FILENAME);
                 pluginConfiguration = updatePluginConfigurationFromShadowOptions(pluginConfiguration, shadowOptionsFilename);
                 // Set the initial state of each watchdog.
                 pluginConfiguration.watchdogs.forEach((watchdog) => { changeState(watchdog, 'starting'); });
@@ -103,7 +103,7 @@ module.exports = function (app) {
                     // Report plugin status to dashboard and notify startup of each
                     // watchdog.
                     let interfaces = _.sortedUniq(pluginConfiguration.watchdogs.map((i) => (i.name)));
-                    pluginStatus.setDefaultStatus(`Started: ${pluginConfiguration.watchdogs.length} watchdog(s) on ${interfaces.length} interface(s)`);
+                    pluginStatus.setDefaultStatus(`Running ${pluginConfiguration.watchdogs.length} watchdog${(pluginConfiguration.watchdogs.length == 1) ? '' : 's'} on ${interfaces.length} interface${(interfaces.length) ? '' : 's'}`);
                     pluginConfiguration.watchdogs.forEach((watchdog) => {
                         app.debug(`watchdog '${watchdog.name}': waiting for interface '${watchdog.interface}' to become active`);
                         delta.addValue(watchdog.notificationPath, { state: 'alert', message: 'Waiting for interface to become active', method: [] }).commit().clear();
